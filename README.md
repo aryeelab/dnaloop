@@ -35,6 +35,22 @@ Note that the FASTQ columns (2 and 3) can contain a comma-separated list of FAST
     $ cd test
     $ preprocess_chiapet --out naive_vs_primed --bwa-index test_genome.fa samples.txt
 
+**Output**
+
+The key output files are:
+
+- `[SAMPLE_NAME].loop_counts.bedpe`
+- `preprocess_chiapet_set.log`
+
+e.g.
+
+    $ head naive_vs_primed/naive_esc_1.loop_counts.bedpe 
+    chrZ 19843 20399 chrZ 19843 20399 . 14
+    chrZ 19843 20399 chrZ 21941 22516 . 1
+    chrZ 19843 20399 chrZ 40625 41746 . 3
+    chrZ 21941 22516 chrZ 21941 22516 . 10
+    chrZ 21941 22516 chrZ 40625 41746 . 1
+
 
 # Usage details
 
