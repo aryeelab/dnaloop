@@ -105,6 +105,4 @@ echo "Total_mapped_unique_pairs_q${MIN_QUAL}: `cat interactions.dedup.bedpe | wc
 echo "Total_mapped_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
 echo "Total_mapped_unique_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
 
-echo "`date`: Run finished" | tee -a $LOG_FILE
-echo -e "\n#  Preprocessing Summary" | tee -a $LOG_FILE
-cat $STATS_FILE | tee -a $LOG_FILE
+echo "`date`: Run finished. See $STATS_FILE for statistics" | tee -a $LOG_FILE
