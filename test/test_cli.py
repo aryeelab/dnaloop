@@ -9,13 +9,11 @@ def file_checksums_equal(file1, file2):
     with open(file2) as f:
         checksum2 = md5.new(f.read()).digest()
     return checksum1==checksum2    
-    
 
-@pytest.fixture
-def runner():
-    return CliRunner()
-
-def test_preproc_run(runner):
+#@pytest.fixture
+  
+def test_preproc_run():
+    runner = CliRunner()
     result = runner.invoke(cli.main, ['--out', 'naive_vs_primed', '--bwa-index', 'test_genome.fa', '--keep-temp-files', 'samples.txt'])
     assert not result.exception
     assert result.exit_code == 0
