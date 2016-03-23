@@ -9,12 +9,8 @@ addons:
     - samtools
     
 before_install:
-  # Install Miniconda
-  - travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
-  - conda update --yes conda
+  # Install MACS2
+  - pip install MACS2
   # Install bwa
   - cd test
   - git clone https://github.com/lh3/bwa.git
@@ -33,8 +29,6 @@ before_install:
   - cd ..
 
 install:
- - conda install --yes numpy=1.9.1 
- - conda install --yes tox
  - python setup.py install
 
 script: 
