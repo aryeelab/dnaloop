@@ -4,8 +4,12 @@ python:
   - "2.6"
   - "2.7"
 
+addons:
+  apt:
+    packages:
+    - samtools
+    
 before_install:
-  - apt-get install samtools
   - cd test
   - git clone https://github.com/lh3/bwa.git
   - cd bwa
