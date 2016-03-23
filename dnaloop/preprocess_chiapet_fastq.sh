@@ -52,8 +52,6 @@ rm linker_r1.txt
 rm linker_r2.txt
 
 echo "`date`: Aligning read pairs that had a linker (R1 or R2 or both)" | tee -a $LOG_FILE
-module load aryee/bwa-0.7.12
-module load samtools/1.2
 bwa mem -t 4 $BWA_INDEX r1.linker_removed.fastq.gz 2> bwa.log  | samtools view -bS - > r1.bam 
 bwa mem -t 4 $BWA_INDEX r2.linker_removed.fastq.gz 2>> bwa.log | samtools view -bS - > r2.bam 
 
