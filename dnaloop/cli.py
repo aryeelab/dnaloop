@@ -23,7 +23,7 @@ def parse_manifest(manifest):
 @click.command()
 #@click.option('--cluster-command', '-c', default='bsub', help='Cluster submit command')
 @click.option('--out', default=".", required=True, help='Output directory name')
-@click.option('--bwa-index', required=True, help='BWA Index')
+@click.option('--bwa-index', required=True, help='BWA index location')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
 @click.argument('manifest')
 #def main(manifest, cluster):
