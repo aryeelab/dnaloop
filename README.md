@@ -1,4 +1,5 @@
 # dnaloop
+[![travis badge](https://travis-ci.org/aryeelab/dnaloop.svg?branch=master)](https://travis-ci.org/aryeelab/dnaloop)
 
 A preprocessing and QC pipeline for ChIA-PET data.
 
