@@ -9,8 +9,6 @@ addons:
     - samtools
     
 before_install:
-  # Install MACS2
-  - pip install MACS2
   # Install bwa
   - cd test
   - git clone https://github.com/lh3/bwa.git
