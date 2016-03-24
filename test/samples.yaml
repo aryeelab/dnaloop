@@ -1,0 +1,7 @@
+naive_esc: 
+    fastq/naive_esc_1.r1.fastq.gz fastq/naive_esc_1.r2.fastq.gz
+    fastq/naive_esc_2.r1.fastq.gz fastq/naive_esc_2.r2.fastq.gz
+primed_esc:
+    fastq/primed_esc_1.r1.fastq.gz fastq/primed_esc_1.r2.fastq.gz
+    fastq/primed_esc_2.r1.fastq.gz fastq/primed_esc_2.r2.fastq.gz
+
