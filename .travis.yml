@@ -32,7 +32,4 @@ install:
  - python setup.py install
 
 script: 
- - macs2 --help
- - cd test 
- - preprocess_chiapet --out naive_vs_primed --bwa-index test_genome.fa --keep-temp-files samples.txt
- - py.test
+ - cd test && py.test
