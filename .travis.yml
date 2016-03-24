@@ -34,5 +34,5 @@ install:
 script: 
  - macs2 --help
  - cd test 
- - preprocess_chiapet --outnaive_vs_primed --bwa-index test_genome.fa --keep-temp-files samples.txt'
+ - preprocess_chiapet --outnaive_vs_primed --bwa-index test_genome.fa --keep-temp-files samples.txt
  - py.test
