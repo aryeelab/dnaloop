@@ -7,8 +7,8 @@ dependencies = ['click', 'cutadapt', 'MACS2']
 
 setup(
     name='dnaloop',
-    version='0.1.0',
-    url='https://github.com/martinaryee/dnaloop',
+    version='0.5.0',
+    url='https://github.com/aryeelab/dnaloop',
     license='BSD',
     author='Caleb Lareau and Martin Aryee',
     author_email='aryee.martin@mgh.harvard.edu',
