@@ -24,10 +24,11 @@ def parse_manifest(manifest):
 #@click.option('--cluster-command', '-c', default='bsub', help='Cluster submit command')
 @click.option('--out', default=".", required=True, help='Output directory name')
 @click.option('--bwa-index', required=True, help='BWA index location')
+@click.option('--merge-gap', default="1500", help='Max gap size for merging peaks')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
 @click.argument('manifest')
 #def main(manifest, cluster):
-def main(manifest, out, bwa_index, keep_temp_files):
+def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     out = os.path.abspath(out)    
@@ -48,7 +49,7 @@ def main(manifest, out, bwa_index, keep_temp_files):
         call(cmd)
     # Create the ChIA-PET analysis set
     preproc_set = os.path.join(script_dir, 'preprocess_chiapet_set.sh')
-    cmd = [preproc_set, out] + [os.path.join(out, 'samples', x['name']) for x in samples]
+    cmd = [preproc_set, out, merge_gap] + [os.path.join(out, 'samples', x['name']) for x in samples]
     click.echo("Creating ChIA-PET set")
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)

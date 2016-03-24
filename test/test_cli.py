@@ -24,3 +24,9 @@ def test_peaks():
     
 def test_loop_counts():
     assert file_checksums_equal('correct_output/naive_esc_1.loop_counts.bedpe', 'naive_vs_primed/naive_esc_1.loop_counts.bedpe')
+
+def test_preproc_run_mergegap():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, ['--out', 'naive_vs_primed', '--bwa-index', 'test_genome.fa', '--merge-gap', '1000', 'samples.txt'])
+    assert not result.exception
+    assert result.exit_code == 0
