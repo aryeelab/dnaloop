@@ -5,8 +5,27 @@ from subprocess import call
 
 def parse_manifest(manifest):
     samples = []
-    with open(manifest) as f:
-        lines = f.readlines()
+    if manifest.endswith(('.yaml', '.yml')):
+        with open(manifest, 'r') as f: 
+            m = yaml.load(f)
+        for sample_name in m['samples']:
+            runs = m['samples'][sample_name]
+            read1 = []
+            read2 = []
+            for run in runs:
+                fastq1, fastq2 = run.split(" ")
+                read1.append(fastq1)
+                read2.append(fastq2)
+            d = {
+                'name': sample_name, 
+                'read1': ','.join(read1),
+                'read2': ','.join(read2)
+                }
+            samples.append(d)
+        return samples
+    else:
+        with open(manifest) as f:
+            lines = f.readlines()
         for line in lines:
             fields = line.strip().split("\t")
             if len(fields)==3:
@@ -18,16 +37,17 @@ def parse_manifest(manifest):
             else:
                 if line != "\n":
                     click.echo ("Skipping line: " + line)
-    return samples
+        return samples
 
 @click.command()
 #@click.option('--cluster-command', '-c', default='bsub', help='Cluster submit command')
 @click.option('--out', default=".", required=True, help='Output directory name')
 @click.option('--bwa-index', required=True, help='BWA index location')
+@click.option('--merge-gap', default="1500", help='Max gap size for merging peaks')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
 @click.argument('manifest')
 #def main(manifest, cluster):
-def main(manifest, out, bwa_index, keep_temp_files):
+def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     script_dir = os.path.dirname(os.path.realpath(__file__))
     out = os.path.abspath(out)    
@@ -48,7 +68,7 @@ def main(manifest, out, bwa_index, keep_temp_files):
         call(cmd)
     # Create the ChIA-PET analysis set
     preproc_set = os.path.join(script_dir, 'preprocess_chiapet_set.sh')
-    cmd = [preproc_set, out] + [os.path.join(out, 'samples', x['name']) for x in samples]
+    cmd = [preproc_set, out, merge_gap] + [os.path.join(out, 'samples', x['name']) for x in samples]
     click.echo("Creating ChIA-PET set")
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)
