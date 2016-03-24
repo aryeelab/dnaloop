@@ -1,5 +1,8 @@
 # dnaloop
 
+[![Build Status](https://travis-ci.org/aryeelab/dnaloop.svg?branch=master)](https://travis-ci.org/aryeelab/dnaloop) (master)        
+[![Build Status](https://travis-ci.org/aryeelab/dnaloop.svg?branch=dev)](https://travis-ci.org/aryeelab/dnaloop) (dev)
+
 A preprocessing and QC pipeline for ChIA-PET data.
 
 # Dependencies
