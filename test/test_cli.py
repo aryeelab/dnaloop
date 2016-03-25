@@ -32,14 +32,13 @@ def test_preproc_run_mergegap():
     assert result.exit_code == 0
 
 def test_parse_yaml_manifest():
-    samples = [ {   'name': 'primed_esc',
+    samples = [ {   'name': 'naive_esc',
+                    'read1': 'fastq/naive_esc_1.r1.fastq.gz,fastq/naive_esc_2.r1.fastq.gz', 
+                    'read2': 'fastq/naive_esc_1.r2.fastq.gz,fastq/naive_esc_2.r2.fastq.gz'
+                },
+                {   'name': 'primed_esc',
                     'read1': 'fastq/primed_esc_1.r1.fastq.gz,fastq/primed_esc_2.r1.fastq.gz', 
                     'read2': 'fastq/primed_esc_1.r2.fastq.gz,fastq/primed_esc_2.r2.fastq.gz'
 
-                }, 
-                {   'name': 'naive_esc',
-                    'read1': 'fastq/naive_esc_1.r1.fastq.gz,fastq/naive_esc_2.r1.fastq.gz', 
-                    'read2': 'fastq/naive_esc_1.r2.fastq.gz,fastq/naive_esc_2.r2.fastq.gz'
-                }
-               ]
+                }]
     assert cli.parse_manifest('samples.yaml') == samples

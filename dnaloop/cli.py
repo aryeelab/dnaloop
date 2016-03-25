@@ -9,7 +9,9 @@ def parse_manifest(manifest):
     if manifest.endswith(('.yaml', '.yml')):
         with open(manifest, 'r') as f: 
             m = yaml.load(f)
-        for sample_name in m['samples']:
+        sample_names = m['samples'].keys()
+        sample_names.sort()
+        for sample_name in sample_names:
             runs = m['samples'][sample_name]
             read1 = []
             read2 = []
