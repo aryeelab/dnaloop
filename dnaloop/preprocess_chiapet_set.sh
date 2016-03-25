@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#source /apps/lab/aryee/pyenv/versions/venv-2.7.10/bin/activate
-#module load aryee/python-2.7.5 # For macs2
-#module load bedtools
-
 # Argument parsing can be fixed later, either by making this a Python script,
 # or through more elegant bash. (e.g. http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
 CHIAPET_SET_DIR=$1
@@ -31,6 +27,7 @@ do
 done
 
 echo "`date`: Calling peaks using reads.bed to define interaction anchor locations" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+which macs2
 macs2 callpeak -t $CHIAPET_SET_DIR/peaks/reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir $CHIAPET_SET_DIR/peaks
 echo "`date`: Found `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak | wc -l` peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 bedtools merge -d $MERGE_GAP -i $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak > $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed

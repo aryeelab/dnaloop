@@ -1,12 +1,34 @@
 import click
 import os
 import shutil
+import yaml
 from subprocess import call
 
 def parse_manifest(manifest):
     samples = []
-    with open(manifest) as f:
-        lines = f.readlines()
+    if manifest.endswith(('.yaml', '.yml')):
+        with open(manifest, 'r') as f: 
+            m = yaml.load(f)
+        sample_names = m['samples'].keys()
+        sample_names.sort()
+        for sample_name in sample_names:
+            runs = m['samples'][sample_name]
+            read1 = []
+            read2 = []
+            for run in runs:
+                fastq1, fastq2 = run.split(" ")
+                read1.append(fastq1)
+                read2.append(fastq2)
+            d = {
+                'name': sample_name, 
+                'read1': ','.join(read1),
+                'read2': ','.join(read2)
+                }
+            samples.append(d)
+        return samples
+    else:
+        with open(manifest) as f:
+            lines = f.readlines()
         for line in lines:
             fields = line.strip().split("\t")
             if len(fields)==3:
@@ -18,7 +40,7 @@ def parse_manifest(manifest):
             else:
                 if line != "\n":
                     click.echo ("Skipping line: " + line)
-    return samples
+        return samples
 
 @click.command()
 #@click.option('--cluster-command', '-c', default='bsub', help='Cluster submit command')
