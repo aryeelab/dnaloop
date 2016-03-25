@@ -14,20 +14,20 @@ def file_checksums_equal(file1, file2):
   
 def test_preproc_run():
     runner = CliRunner()
-    result = runner.invoke(cli.main, ['--out', 'naive_vs_primed', '--bwa-index', 'test_genome.fa', '--keep-temp-files', 'samples.txt'])
+    result = runner.invoke(cli.main, ['--out', 'output1', '--bwa-index', 'test_genome.fa', '--keep-temp-files', 'samples.txt'])
     assert not result.exception
     assert result.exit_code == 0
 
 def test_peaks():
-    assert file_checksums_equal('correct_output/peaks/anchor_peaks.narrowPeak', 'naive_vs_primed/peaks/anchor_peaks.narrowPeak')
-    assert file_checksums_equal('correct_output/peaks/anchor_peaks.merged.bed', 'naive_vs_primed/peaks/anchor_peaks.merged.bed')
+    assert file_checksums_equal('correct_output/peaks/anchor_peaks.narrowPeak', 'output1/peaks/anchor_peaks.narrowPeak')
+    assert file_checksums_equal('correct_output/peaks/anchor_peaks.merged.bed', 'output1/peaks/anchor_peaks.merged.bed')
     
 def test_loop_counts():
-    assert file_checksums_equal('correct_output/naive_esc_1.loop_counts.bedpe', 'naive_vs_primed/naive_esc_1.loop_counts.bedpe')
+    assert file_checksums_equal('correct_output/naive_esc_1.loop_counts.bedpe', 'output1/naive_esc_1.loop_counts.bedpe')
 
 def test_preproc_run_mergegap():
     runner = CliRunner()
-    result = runner.invoke(cli.main, ['--out', 'naive_vs_primed', '--bwa-index', 'test_genome.fa', '--merge-gap', '1000', 'samples.txt'])
+    result = runner.invoke(cli.main, ['--out', 'output2', '--bwa-index', 'test_genome.fa', '--merge-gap', '1000', 'samples.txt'])
     assert not result.exception
     assert result.exit_code == 0
 
