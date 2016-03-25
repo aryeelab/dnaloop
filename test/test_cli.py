@@ -24,3 +24,22 @@ def test_peaks():
     
 def test_loop_counts():
     assert file_checksums_equal('correct_output/naive_esc_1.loop_counts.bedpe', 'naive_vs_primed/naive_esc_1.loop_counts.bedpe')
+
+def test_preproc_run_mergegap():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, ['--out', 'naive_vs_primed', '--bwa-index', 'test_genome.fa', '--merge-gap', '1000', 'samples.txt'])
+    assert not result.exception
+    assert result.exit_code == 0
+
+def test_parse_yaml_manifest():
+    samples = [ {   'name': 'primed_esc',
+                    'read1': 'fastq/primed_esc_1.r1.fastq.gz,fastq/primed_esc_2.r1.fastq.gz', 
+                    'read2': 'fastq/primed_esc_1.r2.fastq.gz,fastq/primed_esc_2.r2.fastq.gz'
+
+                }, 
+                {   'name': 'naive_esc',
+                    'read1': 'fastq/naive_esc_1.r1.fastq.gz,fastq/naive_esc_2.r1.fastq.gz', 
+                    'read2': 'fastq/naive_esc_1.r2.fastq.gz,fastq/naive_esc_2.r2.fastq.gz'
+                }
+               ]
+    assert cli.parse_manifest('samples.yaml') == samples

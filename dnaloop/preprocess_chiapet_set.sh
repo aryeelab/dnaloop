@@ -1,13 +1,10 @@
 #!/bin/bash
 
-#source /apps/lab/aryee/pyenv/versions/venv-2.7.10/bin/activate
-#module load aryee/python-2.7.5 # For macs2
-#module load bedtools
-
 # Argument parsing can be fixed later, either by making this a Python script,
 # or through more elegant bash. (e.g. http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
 CHIAPET_SET_DIR=$1
-SAMPLE_DIRS=${@:2}
+MERGE_GAP=$2
+SAMPLE_DIRS=${@:3}
 
 #CHIAPET_SET_DIR="output/chiapet_set_1"
 #SAMPLE_DIRS="output/tiny output/small"
@@ -30,10 +27,11 @@ do
 done
 
 echo "`date`: Calling peaks using reads.bed to define interaction anchor locations" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+which macs2
 macs2 callpeak -t $CHIAPET_SET_DIR/peaks/reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir $CHIAPET_SET_DIR/peaks
 echo "`date`: Found `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak | wc -l` peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
-bedtools merge -d 1500 -i $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak > $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed
-echo "`date`: Merged peaks within 1500bp resulting in `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | wc -l` anchors" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+bedtools merge -d $MERGE_GAP -i $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak > $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed
+echo "`date`: Merged peaks within ${MERGE_GAP}bp resulting in `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | wc -l` anchors" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 
 
 for SAMPLE_DIR in $SAMPLE_DIRS

@@ -3,11 +3,11 @@ A preprocessing and QC pipeline for ChIA-PET data.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click', 'cutadapt', 'MACS2']
+dependencies = ['click', 'pyyaml', 'cutadapt', 'MACS2']
 
 setup(
     name='dnaloop',
-    version='0.5.1',
+    version='dev',
     url='https://github.com/aryeelab/dnaloop',
     license='BSD',
     author='Caleb Lareau and Martin Aryee',

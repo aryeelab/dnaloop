@@ -1,6 +1,7 @@
 import click
 import os
 import shutil
+import yaml
 from subprocess import call
 
 def parse_manifest(manifest):
