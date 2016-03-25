@@ -7,7 +7,7 @@ dependencies = ['click', 'pyyaml', 'cutadapt', 'MACS2']
 
 setup(
     name='dnaloop',
-    version='dev',
+    version='0.5.2',
     url='https://github.com/aryeelab/dnaloop',
     license='BSD',
     author='Caleb Lareau and Martin Aryee',
