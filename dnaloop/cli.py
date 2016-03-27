@@ -58,7 +58,7 @@ def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
     click.echo("Output folder: %s" % out) 
     click.echo("BWA index: %s\n" % bwa_index)     
     # Preprocess individual samples
-    samples = parse_manifest("samples.txt")
+    samples = parse_manifest(manifest)
     i = 0
     for sample in samples:
         i += 1
