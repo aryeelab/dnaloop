@@ -2,6 +2,7 @@ import click
 import os
 import shutil
 import yaml
+from pkg_resources import get_distribution
 from subprocess import call
 
 def parse_manifest(manifest):
@@ -52,6 +53,12 @@ def parse_manifest(manifest):
 #def main(manifest, cluster):
 def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
     """A preprocessing and QC pipeline for ChIA-PET data."""
+    __version__ = get_distribution('dnaloop').version
+    click.echo("Starting dnaloop pipeline v%s" % __version__)
+    os.mkdir(out)
+    os.mkdir(os.path.join(out, 'log'))
+    with open(os.path.join(out, 'log', 'VERSION.txt'), 'w') as f: 
+        f.write(__version__ + '\n')
     script_dir = os.path.dirname(os.path.realpath(__file__))
     out = os.path.abspath(out)    
     bwa_index = os.path.abspath(bwa_index)    
