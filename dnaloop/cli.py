@@ -3,8 +3,9 @@ import os
 import shutil
 import yaml
 import shutil
+import time
 from pkg_resources import get_distribution
-from subprocess import call
+from subprocess import call, check_call
 
 def parse_manifest(manifest):
     samples = []
@@ -49,10 +50,12 @@ def parse_manifest(manifest):
 @click.option('--out', default=".", required=True, help='Output directory name')
 @click.option('--bwa-index', required=True, help='BWA index location')
 @click.option('--merge-gap', default="1500", help='Max gap size for merging peaks')
+@click.option('--use-lsf', is_flag=True, help='Submit jobs to an LSF cluster?')
+@click.option('--bsub-opts', default="", help='LSF bsub options')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
 @click.argument('manifest')
 #def main(manifest, cluster):
-def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
+def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_files):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     __version__ = get_distribution('dnaloop').version
     click.echo("Starting dnaloop pipeline v%s" % __version__)
@@ -70,6 +73,8 @@ def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
     # Preprocess individual samples
     samples = parse_manifest(manifest)
     i = 0
+    if use_lsf:
+        job_ids = []
     for sample in samples:
         i += 1
         click.echo("\nProcessing sample %d of %d: %s" % (i, len(samples), sample['name']))
@@ -77,8 +82,22 @@ def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
         click.echo("    Read 2: %s" % sample['read2'])    
         preproc_fastq = os.path.join(script_dir, 'preprocess_chiapet_fastq.sh')
         cmd = [preproc_fastq, os.path.join(out, 'samples', sample['name']), bwa_index, sample['read1'], sample['read2']]
-        click.echo("    Executing: %s" % " ".join(cmd))
-        call(cmd)
+        if use_lsf:
+            lsf_id = int(time.time())
+            job_id = 'dnaloop_sample_%d_%d' % (lsf_id, i)
+            cmd = "bsub -J %s %s %s" % (job_id, bsub_opts,  " ".join(cmd))
+            click.echo("    Submitting job to LSF: %s" % cmd)    
+            check_call(cmd, shell=True)
+            job_ids.append(job_id)        
+        else:
+            click.echo("    Executing: %s" % " ".join(cmd))
+            call(cmd)
+    if use_lsf:
+        conditions = ["ended(%s)" % job_id for job_id in job_ids]
+        depend_cond = " && ".join(conditions)
+        cmd = 'bsub -K -o /dev/null -q long -w "%s" exit 0' % depend_cond
+        print("Waiting for %d dnaloop sample preprocessing jobs to finish" % len(job_ids))
+        check_call(cmd, shell=True)        
     # Create the ChIA-PET analysis set
     preproc_set = os.path.join(script_dir, 'preprocess_chiapet_set.sh')
     cmd = [preproc_set, out, merge_gap] + [os.path.join(out, 'samples', x['name']) for x in samples]
@@ -92,4 +111,5 @@ def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
         shutil.rmtree(os.path.join(out, 'peaks'))
         shutil.rmtree(os.path.join(out, 'samples'))
     click.echo("Done")
+
 
