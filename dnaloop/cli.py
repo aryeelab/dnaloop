@@ -2,6 +2,7 @@ import click
 import os
 import shutil
 import yaml
+import shutil
 from pkg_resources import get_distribution
 from subprocess import call
 
@@ -55,6 +56,8 @@ def main(manifest, out, bwa_index, merge_gap, keep_temp_files):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     __version__ = get_distribution('dnaloop').version
     click.echo("Starting dnaloop pipeline v%s" % __version__)
+    if os.path.exists(out):
+        shutil.rmtree(out)
     os.mkdir(out)
     os.mkdir(os.path.join(out, 'log'))
     with open(os.path.join(out, 'log', 'VERSION.txt'), 'w') as f: 
