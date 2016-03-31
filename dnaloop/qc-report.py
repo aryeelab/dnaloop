@@ -1,3 +1,4 @@
+import subprocess                                     
 import os
 import pandas as pd
 import numpy as np
@@ -22,6 +23,12 @@ for s in sampleNames:
 readstats = pd.DataFrame(statslist)
 readstats = readstats.transpose()
 readstats.columns = sampleNames
+
+#Parse .bedpe files
+for s in sampleNames:
+	sfilename = s + ".loop_counts.bedpe"
+	dist_counts = subprocess.check_output("awk '$1 == $4 {print $5-$2 \"\t\" $8}' " + sfilename, shell=True)
+	print dist_counts
 
 # Now make the plots
 with PdfPages('qc-report.pdf') as pdf:
