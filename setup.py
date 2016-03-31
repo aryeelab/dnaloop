@@ -3,7 +3,7 @@ A preprocessing and QC pipeline for ChIA-PET data.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click', 'pyyaml', 'cutadapt', 'MACS2']
+dependencies = ['click', 'pyyaml', 'cutadapt', 'MACS2', 'pandas', 'matplotlib']
 
 setup(
     name='dnaloop',
@@ -42,7 +42,6 @@ setup(
         'Operating System :: Unix',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ]
 )
