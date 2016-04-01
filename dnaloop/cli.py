@@ -78,19 +78,8 @@ def qc_report(dir):
         plt.figure(figsize=(8, 11))
         readstats.ix[0].plot(kind='bar')
         plt.title('Total Reads Per Sample')
-        
         pdf.savefig()  # saves the current figure into a pdf page
         plt.close()
-        
-        plt.rc('text', usetex=True)
-        plt.figure(figsize=(3, 3))
-        x = np.arange(0, 5, 0.1)
-        plt.plot(x, np.sin(x), 'b-')
-        plt.title('Page Two')
-        
-        pdf.savefig()
-        plt.close()
-
 
 
 @click.command()
