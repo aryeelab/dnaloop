@@ -8,6 +8,8 @@ from pkg_resources import get_distribution
 from subprocess import call, check_call
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
