@@ -6,6 +6,12 @@ import shutil
 import time
 from pkg_resources import get_distribution
 from subprocess import call, check_call
+import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
 
 def parse_manifest(manifest):
     samples = []
@@ -44,6 +50,36 @@ def parse_manifest(manifest):
                 if line != "\n":
                     click.echo ("Skipping line: " + line)
         return samples
+
+#Grab Sample Names
+def get_subdirectories(dir):
+    return [name for name in os.listdir(dir)
+            if os.path.isdir(os.path.join(dir, name))]
+
+def qc_report(dir):
+    #Read in the summary statistics            
+    statslist = []
+    sampleNames = get_subdirectories(os.path.join(dir, "samples"))
+    for s in sampleNames:
+        sfile = open(os.path.join(dir, "samples/" + s + "/read_stats.txt"), 'r')
+        stats = []
+        header = sfile.readline()
+        for l in sfile.readlines():
+            stats.append(int(l.split(": ")[1].strip()))	
+        statslist.append(stats)
+    
+    readstats = pd.DataFrame(statslist)
+    readstats = readstats.transpose()
+    readstats.columns = sampleNames
+    
+    # Now make the plots
+    with PdfPages(os.path.join(dir, 'qc-report.pdf')) as pdf:    
+        plt.figure(figsize=(8, 11))
+        readstats.ix[0].plot(kind='bar')
+        plt.title('Total Reads Per Sample')
+        pdf.savefig()  # saves the current figure into a pdf page
+        plt.close()
+
 
 @click.command()
 #@click.option('--cluster-command', '-c', default='bsub', help='Cluster submit command')
@@ -104,6 +140,8 @@ def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_file
     click.echo("Creating ChIA-PET set")
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)
+    click.echo("Creating QC report")
+    qc_report(out)
     if keep_temp_files:
         click.echo("Temporary files not deleted since --keep-temp-files was specified")
     else:
