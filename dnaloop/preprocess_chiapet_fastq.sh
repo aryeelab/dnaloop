@@ -77,10 +77,6 @@ sort -k1,1V -k2,2n -k4,4V -k5,5n interactions.unsorted.orderedanchors.bedpe > in
 echo "`date`: Writing unique (i.e. deduplicated) interactions to interactions.dedup.bedpe (based on chr1, pos1, chr2, pos2)" | tee -a $LOG_FILE
 sort -k1,1V -k2,2n -k4,4V -k5,5n --unique interactions.bedpe > interactions.dedup.bedpe
 
-echo "`date`: Writing unique interaction left and right anchors to left.dedup.bed and right.dedup.bed" | tee -a $LOG_FILE
-cut -f 1-3,7 interactions.dedup.bedpe > left.dedup.bed 
-cut -f 4-6,7 interactions.dedup.bedpe > right.dedup.bed 
-
 echo "`date`: Writing read processing summary counts to read_stats.txt (also given below in log)" | tee -a $LOG_FILE
 STATS_FILE='read_stats.txt'
 echo "Sample_directory: $SAMPLE_DIR" > $STATS_FILE

@@ -19,15 +19,25 @@ LOG_FILE="log/preprocess_chiapet_set.log"
 mkdir -p $CHIAPET_SET_DIR/peaks
 echo "`date`: Run starting in $CHIAPET_SET_DIR" | tee $CHIAPET_SET_DIR/$LOG_FILE
 
+for SAMPLE_DIR in $SAMPLE_DIRS
+do
+    SAMPLE_ANCHOR_DIR=$CHIAPET_SET_DIR/peaks/`basename $SAMPLE_DIR`
+    mkdir -p $SAMPLE_ANCHOR_DIR
+    echo "`date`: Writing unique interaction left and right anchors for $SAMPLE_DIR to left.dedup.bed and right.dedup.bed" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+    cut -f 1-3,7 $SAMPLE_DIR/interactions.dedup.bedpe > $SAMPLE_ANCHOR_DIR/left.dedup.bed 
+    cut -f 4-6,7 $SAMPLE_DIR/interactions.dedup.bedpe > $SAMPLE_ANCHOR_DIR/right.dedup.bed 
+done
+
 rm -f $CHIAPET_SET_DIR/peaks/reads.bed
 for SAMPLE_DIR in $SAMPLE_DIRS
 do
     echo "`date`: Adding reads from $SAMPLE_DIR to reads.bed" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
-    cat $SAMPLE_DIR/left.dedup.bed $SAMPLE_DIR/right.dedup.bed >> $CHIAPET_SET_DIR/peaks/reads.bed
+    cat $SAMPLE_ANCHOR_DIR/left.dedup.bed $SAMPLE_ANCHOR_DIR/right.dedup.bed >> $CHIAPET_SET_DIR/peaks/reads.bed
 done
 
 echo "`date`: Calling peaks using reads.bed to define interaction anchor locations" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
-which macs2
+echo "`date`: Using `which macs2`" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+echo "`date`: MACS command: macs2 callpeak -t $CHIAPET_SET_DIR/peaks/reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir $CHIAPET_SET_DIR/peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 macs2 callpeak -t $CHIAPET_SET_DIR/peaks/reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir $CHIAPET_SET_DIR/peaks
 echo "`date`: Found `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak | wc -l` peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 bedtools merge -d $MERGE_GAP -i $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak > $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed
@@ -40,11 +50,10 @@ do
     cp $SAMPLE_DIR/bwa.log $CHIAPET_SET_DIR/log/`basename $SAMPLE_DIR`.bwa.log
     cp $SAMPLE_DIR/preprocess_fastq.log $CHIAPET_SET_DIR/log/`basename $SAMPLE_DIR`.preprocess_fastq.log    
     cp $SAMPLE_DIR/read_stats.txt $CHIAPET_SET_DIR/log/`basename $SAMPLE_DIR`.read_stats.txt
-    echo "`date`:   Mapping `cat $SAMPLE_DIR/left.dedup.bed | wc -l` PETs to anchors by intersecting with peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
     SAMPLE_ANCHOR_DIR=$CHIAPET_SET_DIR/peaks/`basename $SAMPLE_DIR`
-    mkdir -p $SAMPLE_ANCHOR_DIR
-    bedtools intersect -loj -a $SAMPLE_DIR/left.dedup.bed -b $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > $SAMPLE_ANCHOR_DIR/anchor1.bed
-    bedtools intersect -loj -a $SAMPLE_DIR/right.dedup.bed -b $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > $SAMPLE_ANCHOR_DIR/anchor2.bed
+    echo "`date`:   Mapping `cat $SAMPLE_ANCHOR_DIR/left.dedup.bed | wc -l` PETs to anchors by intersecting with peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+    bedtools intersect -loj -a $SAMPLE_ANCHOR_DIR/left.dedup.bed -b $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > $SAMPLE_ANCHOR_DIR/anchor1.bed
+    bedtools intersect -loj -a $SAMPLE_ANCHOR_DIR/right.dedup.bed -b $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > $SAMPLE_ANCHOR_DIR/anchor2.bed
     # Confirm reads match up between left and right
     cut -f 4 $SAMPLE_ANCHOR_DIR/anchor1.bed > $SAMPLE_ANCHOR_DIR/anchor1_names.txt
     cut -f 4 $SAMPLE_ANCHOR_DIR/anchor2.bed > $SAMPLE_ANCHOR_DIR/anchor2_names.txt
