@@ -32,6 +32,7 @@ rm -f $CHIAPET_SET_DIR/peaks/reads.bed
 for SAMPLE_DIR in $SAMPLE_DIRS
 do
     echo "`date`: Adding reads from $SAMPLE_DIR to reads.bed" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+    SAMPLE_ANCHOR_DIR=$CHIAPET_SET_DIR/peaks/`basename $SAMPLE_DIR`
     cat $SAMPLE_ANCHOR_DIR/left.dedup.bed $SAMPLE_ANCHOR_DIR/right.dedup.bed >> $CHIAPET_SET_DIR/peaks/reads.bed
 done
 
