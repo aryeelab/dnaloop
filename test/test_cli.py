@@ -18,6 +18,9 @@ def test_preproc_run():
     assert not result.exception
     assert result.exit_code == 0
 
+def test_reads_for_peak_calling():
+    assert file_checksums_equal('correct_output/peaks/reads.bed', 'output1/peaks/reads.bed')
+
 def test_peaks():
     assert file_checksums_equal('correct_output/peaks/anchor_peaks.narrowPeak', 'output1/peaks/anchor_peaks.narrowPeak')
     assert file_checksums_equal('correct_output/peaks/anchor_peaks.merged.bed', 'output1/peaks/anchor_peaks.merged.bed')
