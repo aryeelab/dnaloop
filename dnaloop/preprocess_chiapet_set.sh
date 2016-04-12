@@ -69,6 +69,8 @@ do
     # Keep only interactions where both reads map to anchors
     awk '{if ($1 != "." && $4 != ".") print}' $SAMPLE_ANCHOR_DIR/anchor_interactions.tmp > $SAMPLE_ANCHOR_DIR/anchor_interactions.bedpe
     echo "`date`:   Wrote `cat $SAMPLE_ANCHOR_DIR/anchor_interactions.bedpe | wc -l` PETs where both reads map to anchors ($SAMPLE_ANCHOR_DIR/anchor_interactions.bedpe)" | tee -a $CHIAPET_SET_DIR/$LOG_FILE    
+    DIFF_ANCHOR_PETS_5KB=`awk '($1==$4) && ($5-$3 >= 5000)' $SAMPLE_ANCHOR_DIR/anchor_interactions.tmp | wc -l`    
+    echo "`date`:   PETS mapped to anchors >=5kb apart: $DIFF_ANCHOR_PETS_5KB" | tee -a $CHIAPET_SET_DIR/$LOG_FILE    
     cut -f1-6 $SAMPLE_ANCHOR_DIR/anchor_interactions.bedpe | sort | uniq -c | awk '{print $2,$3,$4,$5,$6,$7,".",$1}' > $SAMPLE_ANCHOR_DIR/loop_counts.bedpe
     cp $SAMPLE_ANCHOR_DIR/loop_counts.bedpe $CHIAPET_SET_DIR/`basename $SAMPLE_DIR`.loop_counts.bedpe
     echo "`date`:   Wrote loop PET counts to $CHIAPET_SET_DIR/`basename $SAMPLE_DIR`.loop_counts.bedpe" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
@@ -76,12 +78,10 @@ do
     DIFF_ANCHOR_LOOPS=`cat $SAMPLE_ANCHOR_DIR/loop_counts.bedpe | awk '$1!=$4 || $2!=$5' | wc -l`
     DIFF_ANCHOR_LOOPS_3PETS=`cat $SAMPLE_ANCHOR_DIR/loop_counts.bedpe | awk '($1!=$4 || $2!=$5) && $8>=3' | wc -l`
     DIFF_ANCHOR_INTRACHROMOSOMAL_LOOPS_3PETS=`cat $SAMPLE_ANCHOR_DIR/loop_counts.bedpe | awk '($1==$4) && ($2!=$5) && $8>=3' | wc -l`
-    DIFF_ANCHOR_INTRACHROMOSOMAL_5kb_LOOPS_3PETS=`cat $SAMPLE_ANCHOR_DIR/loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=3' | wc -l`
-    rm -fr $SAMPLE_ANCHOR_DIR
-    echo "`date`:   Removed temporary directory $SAMPLE_ANCHOR_DIR" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+    DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS=`cat $SAMPLE_ANCHOR_DIR/loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=3' | wc -l`
     echo "`date`:   Invalid loops between the same anchor (i.e. left==right): $SAME_ANCHOR_LOOPS" | tee -a $CHIAPET_SET_DIR/$LOG_FILE    
     echo "`date`:   Valid loops between different anchors (i.e. left!=right): $DIFF_ANCHOR_LOOPS" | tee -a $CHIAPET_SET_DIR/$LOG_FILE        
     echo "`date`:   Valid loops between different anchors with 3+ supporting PETs: $DIFF_ANCHOR_LOOPS_3PETS" | tee -a $CHIAPET_SET_DIR/$LOG_FILE        
     echo "`date`:   Valid intrachromosomal loops between different anchors with 3+ supporting PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_LOOPS_3PETS" | tee -a $CHIAPET_SET_DIR/$LOG_FILE        
-    echo "`date`:   Valid intrachromosomal 5kb+ loops with 3+ supporting PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_5kb_LOOPS_3PETS" | tee -a $CHIAPET_SET_DIR/$LOG_FILE        
+    echo "`date`:   Valid intrachromosomal 5kb+ loops with 3+ supporting PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" | tee -a $CHIAPET_SET_DIR/$LOG_FILE        
 done
