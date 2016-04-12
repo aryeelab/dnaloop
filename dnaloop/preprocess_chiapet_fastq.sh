@@ -52,8 +52,8 @@ rm linker_r1.txt
 rm linker_r2.txt
 
 echo "`date`: Aligning read pairs that had a linker (R1 or R2 or both)" | tee -a $LOG_FILE
-bwa mem -t 4 $BWA_INDEX r1.linker_removed.fastq.gz 2> bwa.log  | samtools view -bS - > r1.bam 
-bwa mem -t 4 $BWA_INDEX r2.linker_removed.fastq.gz 2>> bwa.log | samtools view -bS - > r2.bam 
+bwa mem $BWA_INDEX r1.linker_removed.fastq.gz 2> bwa.log  | samtools view -bS - > r1.bam 
+bwa mem $BWA_INDEX r2.linker_removed.fastq.gz 2>> bwa.log | samtools view -bS - > r2.bam 
 
 echo "`date`: Writing interactions with both anchors mapped (MAPQ>=$MIN_QUAL) to interactions.bedpe" | tee -a $LOG_FILE
 samtools view -F2304 r1.bam  | awk -v READ_LEN="$READ_LEN" -v MIN_QUAL="$MIN_QUAL" '{if ($5>=MIN_QUAL) print $3,$4,$4+READ_LEN,$1; else print "*","*","*",$1}' OFS='\t' > pos_r1.bed
