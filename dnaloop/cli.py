@@ -3,7 +3,8 @@ import os
 import shutil
 import yaml
 import shutil
-import time
+import random
+import string
 from pkg_resources import get_distribution
 from subprocess import call, check_call
 import pandas as pd
@@ -112,6 +113,7 @@ def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_file
     i = 0
     if use_lsf:
         job_ids = []
+        lsf_id = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(5))
     for sample in samples:
         i += 1
         click.echo("\nProcessing sample %d of %d: %s" % (i, len(samples), sample['name']))
@@ -120,8 +122,7 @@ def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_file
         preproc_fastq = os.path.join(script_dir, 'preprocess_chiapet_fastq.sh')
         cmd = [preproc_fastq, os.path.join(out, 'samples', sample['name']), bwa_index, sample['read1'], sample['read2']]
         if use_lsf:
-            lsf_id = int(time.time())
-            job_id = 'dnaloop_sample_%d_%d' % (lsf_id, i)
+            job_id = 'dnaloop_sample_%s_%d' % (lsf_id, i)
             cmd = "bsub -J %s %s %s" % (job_id, bsub_opts,  " ".join(cmd))
             click.echo("    Submitting job to LSF: %s" % cmd)    
             check_call(cmd, shell=True)
