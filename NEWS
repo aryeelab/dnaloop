@@ -1,3 +1,6 @@
+# 0.5.13
+- Fixed naming inconsistencies in read_stats.txt
+
 # 0.5.12
 - Added extra read stats to preprocess_chiapet_fastq.sh including anchor mapping
 
