@@ -6,8 +6,9 @@
 # or through more elegant bash. (e.g. http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
 SAMPLE_DIR=$1
 BWA_INDEX=$2
-R1_FASTQ=$3
-R2_FASTQ=$4
+MERGE_GAP=$3
+R1_FASTQ=$4
+R2_FASTQ=$5
 
 ## Test argument set 1
 #SAMPLE_DIR="output/tiny"
@@ -51,7 +52,7 @@ rm linker.txt
 rm linker_r1.txt
 rm linker_r2.txt
 
-echo "`date`: Aligning read pairs that had a linker (R1 or R2 or both)" | tee -a $LOG_FILE
+echo "`date`: Aligning PETs that had a linker (R1 or R2 or both)" | tee -a $LOG_FILE
 bwa mem $BWA_INDEX r1.linker_removed.fastq.gz 2> bwa.log  | samtools view -bS - > r1.bam 
 bwa mem $BWA_INDEX r2.linker_removed.fastq.gz 2>> bwa.log | samtools view -bS - > r2.bam 
 
@@ -77,26 +78,86 @@ sort -k1,1V -k2,2n -k4,4V -k5,5n interactions.unsorted.orderedanchors.bedpe > in
 echo "`date`: Writing unique (i.e. deduplicated) interactions to interactions.dedup.bedpe (based on chr1, pos1, chr2, pos2)" | tee -a $LOG_FILE
 sort -k1,1V -k2,2n -k4,4V -k5,5n --unique interactions.bedpe > interactions.dedup.bedpe
 
-echo "`date`: Writing read processing summary counts to read_stats.txt (also given below in log)" | tee -a $LOG_FILE
+echo "`date`: Writing read processing summary counts to read_stats.txt" | tee -a $LOG_FILE
 STATS_FILE='read_stats.txt'
 echo "Sample_directory: $SAMPLE_DIR" > $STATS_FILE
 FASTQ_LEN=`zcat r1.fastq.gz | wc -l`
-echo "Total_read_pairs: $((FASTQ_LEN / 4))" >> $STATS_FILE
+echo "Total_PETs: $((FASTQ_LEN / 4))" >> $STATS_FILE
 LINKER_FASTQ_LEN=`zcat r1.linker_removed.fastq.gz | wc -l`
-echo "Read_pairs_with_linker: $((LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
+echo "PETs_with_linker: $((LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
 NO_LINKER_FASTQ_LEN=`zcat r1.no_linker.fastq.gz | wc -l`
-echo "Read_pairs_without_linker: $((NO_LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
-echo "Discarded_short_read_pairs: $(((FASTQ_LEN - LINKER_FASTQ_LEN - NO_LINKER_FASTQ_LEN) / 4))" >> $STATS_FILE
+echo "PETs_without_linker: $((NO_LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
+echo "Discarded_short_PETs: $(((FASTQ_LEN - LINKER_FASTQ_LEN - NO_LINKER_FASTQ_LEN) / 4))" >> $STATS_FILE
 echo "Linker_on_R1_and_R2: `cat linker_stats.txt | grep -w $'linker\tlinker' | awk '{print $1}'`" >> $STATS_FILE
 echo "Linker_on_R1_only: `cat linker_stats.txt | grep -w $'linker\tno_linker' | awk '{print $1}'`" >> $STATS_FILE
 echo "Linker_on_R2_only: `cat linker_stats.txt | grep -w $'no_linker\tlinker' | awk '{print $1}'`" >> $STATS_FILE
-echo "Total_mapped_r1_q5: `samtools view -q5 -F2304 r1.bam | wc -l`" >> $STATS_FILE
-echo "Total_mapped_r2_q5: `samtools view -q5 -F2304 r2.bam | wc -l`" >> $STATS_FILE
-echo "Total_mapped_r1_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r1.bam | wc -l`" >> $STATS_FILE
-echo "Total_mapped_r2_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r2.bam | wc -l`" >> $STATS_FILE
-echo "Total_mapped_pairs_q${MIN_QUAL}: `cat interactions.bedpe | wc -l`" >> $STATS_FILE
-echo "Total_mapped_unique_pairs_q${MIN_QUAL}: `cat interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
-echo "Total_mapped_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
-echo "Total_mapped_unique_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_r1_q5: `samtools view -q5 -F2304 r1.bam | wc -l`" >> $STATS_FILE
+echo "Mapped_r2_q5: `samtools view -q5 -F2304 r2.bam | wc -l`" >> $STATS_FILE
+echo "Mapped_r1_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r1.bam | wc -l`" >> $STATS_FILE
+echo "Mapped_r2_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r2.bam | wc -l`" >> $STATS_FILE
+echo "Mapped_PETs_q${MIN_QUAL}: `cat interactions.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_PETs_q${MIN_QUAL}: `cat interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_intrachromosal_pairs_q${MIN_QUAL}_5kb: `awk '{if (($1==$4) && ($5-$3 >= 5000)) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
 
+
+##############################################################################
+####  Note that the section below dealing with peak calling and
+####  anchor mapping largely duplicates code from preprocess_chiapet_set. DRY
+echo "`date`: Running preprocess_chiapet_set to compute anchor stats" | tee -a $LOG_FILE
+SAMPLE_ANCHOR_DIR=anchors
+mkdir -p $SAMPLE_ANCHOR_DIR
+echo "`date`: Writing unique interaction left and right anchors for $SAMPLE_DIR to left.dedup.bed and right.dedup.bed" | tee -a $LOG_FILE
+cut -f 1-3,7 interactions.dedup.bedpe > $SAMPLE_ANCHOR_DIR/left.dedup.bed 
+cut -f 4-6,7 interactions.dedup.bedpe > $SAMPLE_ANCHOR_DIR/right.dedup.bed 
+cd $SAMPLE_ANCHOR_DIR
+echo "`date`: Adding reads to reads.bed" | tee -a ../$LOG_FILE
+cat left.dedup.bed right.dedup.bed > reads.bed
+echo "`date`: Calling peaks using reads.bed to define interaction anchor locations" | tee -a ../$LOG_FILE
+echo "`date`: Using `which macs2`" | tee -a ../$LOG_FILE
+echo "`date`: MACS command: macs2 callpeak -t reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir ." | tee -a ../$LOG_FILE
+macs2 callpeak -t reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir .
+NUM_PEAKS=`cat anchor_peaks.narrowPeak | wc -l`
+echo "`date`: Found $NUM_PEAKS peaks" | tee -a ../$LOG_FILE
+bedtools merge -d $MERGE_GAP -i anchor_peaks.narrowPeak > anchor_peaks.merged.bed
+NUM_MERGED_PEAKS=`cat anchor_peaks.merged.bed | wc -l`
+echo "`date`: Merged peaks within ${MERGE_GAP}bp resulting in $NUM_MERGED_PEAKS anchors" | tee -a ../$LOG_FILE
+echo "`date`:   Mapping `cat left.dedup.bed | wc -l` PETs to anchors by intersecting with peaks" | tee -a ../$LOG_FILE
+bedtools intersect -loj -a left.dedup.bed -b anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > anchor1.bed
+bedtools intersect -loj -a right.dedup.bed -b anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > anchor2.bed
+# Confirm reads match up between left and right
+cut -f 4 anchor1.bed > anchor1_names.txt
+cut -f 4 anchor2.bed > anchor2_names.txt
+DIFF=$(diff anchor1_names.txt anchor1_names.txt) 
+if [ "$DIFF" != "" ] 
+then
+    echo "ERROR: Read names don't match between anchor1.bed and anchor2.bed" | tee -a ../$LOG_FILE
+    exit 1
+fi
+# Create BEDPE
+paste anchor1.bed anchor2.bed | cut -f 1-3,5-8 > anchor_interactions.tmp
+# Keep only interactions where both reads map to anchors
+awk '{if ($1 != "." && $4 != ".") print}' anchor_interactions.tmp > anchor_interactions.bedpe
+ANCHOR_PETS=`cat anchor_interactions.bedpe | wc -l`
+echo "`date`:   Wrote $ANCHOR_PETS PETs where both reads map to anchors (anchor_interactions.bedpe)" | tee -a ../$LOG_FILE    
+DIFF_ANCHOR_PETS_5KB=`awk '($1==$4) && ($5-$3 >= 5000)' anchor_interactions.tmp | wc -l`    
+cut -f1-6 anchor_interactions.bedpe | sort | uniq -c | awk '{print $2,$3,$4,$5,$6,$7,".",$1}' > loop_counts.bedpe
+SAME_ANCHOR_LOOPS=`cat loop_counts.bedpe | awk '$1==$4 && $2==$5' | wc -l`
+DIFF_ANCHOR_LOOPS=`cat loop_counts.bedpe | awk '$1!=$4 || $2!=$5' | wc -l`
+DIFF_ANCHOR_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1!=$4 || $2!=$5) && $8>=3' | wc -l`
+DIFF_ANCHOR_INTRACHROMOSOMAL_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($2!=$5) && $8>=3' | wc -l`
+DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000)' | wc -l`
+DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=2' | wc -l`
+DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=3' | wc -l`
+echo "Num_peaks: $NUM_PEAKS" >> ../$STATS_FILE
+echo "Num_merged_peaks: $NUM_MERGED_PEAKS" >> ../$STATS_FILE
+echo "Anchor_mapped_pets: $ANCHOR_PETS" >> ../$STATS_FILE
+echo "Anchor_mapped_pets_5kb: $DIFF_ANCHOR_PETS_5KB" >> ../$STATS_FILE
+echo "Same_anchor_loops: $SAME_ANCHOR_LOOPS" >> ../$STATS_FILE
+echo "5kb_loops_1pet: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET" >> ../$STATS_FILE
+echo "5kb_loops_2pets: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS" >> ../$STATS_FILE
+echo "5kb_loops_3pets: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" >> ../$STATS_FILE
+
+cd ..
 echo "`date`: Run finished. See $STATS_FILE for statistics" | tee -a $LOG_FILE
