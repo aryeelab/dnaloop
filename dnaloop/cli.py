@@ -141,8 +141,8 @@ def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_file
     click.echo("Creating ChIA-PET set")
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)
-    click.echo("Creating QC report")
-    qc_report(out)
+    # click.echo("Creating QC report")
+    # qc_report(out)
     if keep_temp_files:
         click.echo("Temporary files not deleted since --keep-temp-files was specified")
     else:
