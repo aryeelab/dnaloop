@@ -119,7 +119,7 @@ def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_file
         click.echo("    Read 1: %s" % sample['read1']) 
         click.echo("    Read 2: %s" % sample['read2'])    
         preproc_fastq = os.path.join(script_dir, 'preprocess_chiapet_fastq.sh')
-        cmd = [preproc_fastq, os.path.join(out, 'samples', sample['name']), bwa_index, sample['read1'], sample['read2']]
+        cmd = [preproc_fastq, os.path.join(out, 'samples', sample['name']), bwa_index, merge_gap, sample['read1'], sample['read2']]
         if use_lsf:
             job_id = 'dnaloop_sample_%s_%d' % (lsf_id, i)
             cmd = "bsub -J %s %s %s" % (job_id, bsub_opts,  " ".join(cmd))
