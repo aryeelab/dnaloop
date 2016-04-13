@@ -97,9 +97,9 @@ echo "Mapped_r1_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r1.bam | wc -l
 echo "Mapped_r2_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r2.bam | wc -l`" >> $STATS_FILE
 echo "Mapped_PETs_q${MIN_QUAL}: `cat interactions.bedpe | wc -l`" >> $STATS_FILE
 echo "Mapped_unique_PETs_q${MIN_QUAL}: `cat interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_unique_intrachromosal_pairs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_unique_intrachromosal_pairs_q${MIN_QUAL}_5kb: `awk '{if (($1==$4) && ($5-$3 >= 5000)) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_intrachromosal_PETs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL}_5kb: `awk '{if (($1==$4) && ($5-$3 >= 5000)) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
 
 
 ##############################################################################
@@ -152,12 +152,12 @@ DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS=`cat loop_counts.bedpe | awk '($1==
 DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=3' | wc -l`
 echo "Num_peaks: $NUM_PEAKS" >> ../$STATS_FILE
 echo "Num_merged_peaks: $NUM_MERGED_PEAKS" >> ../$STATS_FILE
-echo "Anchor_mapped_pets: $ANCHOR_PETS" >> ../$STATS_FILE
-echo "Anchor_mapped_pets_5kb: $DIFF_ANCHOR_PETS_5KB" >> ../$STATS_FILE
+echo "Anchor_mapped_PETs: $ANCHOR_PETS" >> ../$STATS_FILE
+echo "Anchor_mapped_PETs_5kb: $DIFF_ANCHOR_PETS_5KB" >> ../$STATS_FILE
 echo "Same_anchor_loops: $SAME_ANCHOR_LOOPS" >> ../$STATS_FILE
-echo "5kb_loops_1pet: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET" >> ../$STATS_FILE
-echo "5kb_loops_2pets: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS" >> ../$STATS_FILE
-echo "5kb_loops_3pets: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" >> ../$STATS_FILE
+echo "5kb_loops_1PET: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET" >> ../$STATS_FILE
+echo "5kb_loops_2PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS" >> ../$STATS_FILE
+echo "5kb_loops_3PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" >> ../$STATS_FILE
 
 cd ..
 echo "`date`: Run finished. See $STATS_FILE for statistics" | tee -a $LOG_FILE
