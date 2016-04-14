@@ -80,26 +80,29 @@ sort -k1,1V -k2,2n -k4,4V -k5,5n --unique interactions.bedpe > interactions.dedu
 
 echo "`date`: Writing read processing summary counts to read_stats.txt" | tee -a $LOG_FILE
 STATS_FILE='read_stats.txt'
-echo "Sample_directory: $SAMPLE_DIR" > $STATS_FILE
+echo "# Sample_directory: $SAMPLE_DIR" > $STATS_FILE
+echo "#" >> $STATS_FILE
+echo "# PET stats" >> $STATS_FILE
+echo "# Note: A PET is a paired-end tag, i.e. a read pair" >> $STATS_FILE
 FASTQ_LEN=`zcat r1.fastq.gz | wc -l`
-echo "Total_PETs: $((FASTQ_LEN / 4))" >> $STATS_FILE
+echo "Total_PETs $((FASTQ_LEN / 4))" >> $STATS_FILE
 LINKER_FASTQ_LEN=`zcat r1.linker_removed.fastq.gz | wc -l`
-echo "PETs_with_linker: $((LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
+echo "PETs_with_linker $((LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
 NO_LINKER_FASTQ_LEN=`zcat r1.no_linker.fastq.gz | wc -l`
-echo "PETs_without_linker: $((NO_LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
-echo "Discarded_short_PETs: $(((FASTQ_LEN - LINKER_FASTQ_LEN - NO_LINKER_FASTQ_LEN) / 4))" >> $STATS_FILE
-echo "Linker_on_R1_and_R2: `cat linker_stats.txt | grep -w $'linker\tlinker' | awk '{print $1}'`" >> $STATS_FILE
-echo "Linker_on_R1_only: `cat linker_stats.txt | grep -w $'linker\tno_linker' | awk '{print $1}'`" >> $STATS_FILE
-echo "Linker_on_R2_only: `cat linker_stats.txt | grep -w $'no_linker\tlinker' | awk '{print $1}'`" >> $STATS_FILE
-echo "Mapped_r1_q5: `samtools view -q5 -F2304 r1.bam | wc -l`" >> $STATS_FILE
-echo "Mapped_r2_q5: `samtools view -q5 -F2304 r2.bam | wc -l`" >> $STATS_FILE
-echo "Mapped_r1_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r1.bam | wc -l`" >> $STATS_FILE
-echo "Mapped_r2_q${MIN_QUAL}: `samtools view -q${MIN_QUAL} -F2304 r2.bam | wc -l`" >> $STATS_FILE
-echo "Mapped_PETs_q${MIN_QUAL}: `cat interactions.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_unique_PETs_q${MIN_QUAL}: `cat interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_intrachromosal_PETs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL}: `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
-echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL}_5kb: `awk '{if (($1==$4) && ($5-$3 >= 5000)) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+#echo "PETs_without_linker $((NO_LINKER_FASTQ_LEN / 4))" >> $STATS_FILE
+#echo "Discarded_short_PETs $(((FASTQ_LEN - LINKER_FASTQ_LEN - NO_LINKER_FASTQ_LEN) / 4))" >> $STATS_FILE
+#echo "Linker_on_R1_and_R2 `cat linker_stats.txt | grep -w $'linker\tlinker' | awk '{print $1}'`" >> $STATS_FILE
+#echo "Linker_on_R1_only `cat linker_stats.txt | grep -w $'linker\tno_linker' | awk '{print $1}'`" >> $STATS_FILE
+#echo "Linker_on_R2_only `cat linker_stats.txt | grep -w $'no_linker\tlinker' | awk '{print $1}'`" >> $STATS_FILE
+#echo "Mapped_r1_q5 `samtools view -q5 -F2304 r1.bam | wc -l`" >> $STATS_FILE
+#echo "Mapped_r2_q5 `samtools view -q5 -F2304 r2.bam | wc -l`" >> $STATS_FILE
+#echo "Mapped_r1_q${MIN_QUAL} `samtools view -q${MIN_QUAL} -F2304 r1.bam | wc -l`" >> $STATS_FILE
+#echo "Mapped_r2_q${MIN_QUAL} `samtools view -q${MIN_QUAL} -F2304 r2.bam | wc -l`" >> $STATS_FILE
+echo "Mapped_PETs_q${MIN_QUAL} `cat interactions.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_PETs_q${MIN_QUAL} `cat interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+#echo "Mapped_intrachromosal_PETs_q${MIN_QUAL} `awk '{if ($1==$4) print}' interactions.bedpe | wc -l`" >> $STATS_FILE
+#echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL} `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
+echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL}_5kb `awk '{if (($1==$4) && ($5-$3 >= 5000)) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
 
 
 ##############################################################################
@@ -150,14 +153,19 @@ DIFF_ANCHOR_INTRACHROMOSOMAL_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) 
 DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000)' | wc -l`
 DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=2' | wc -l`
 DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=3' | wc -l`
-echo "Num_peaks: $NUM_PEAKS" >> ../$STATS_FILE
-echo "Num_merged_peaks: $NUM_MERGED_PEAKS" >> ../$STATS_FILE
-echo "Anchor_mapped_PETs: $ANCHOR_PETS" >> ../$STATS_FILE
-echo "Anchor_mapped_PETs_5kb: $DIFF_ANCHOR_PETS_5KB" >> ../$STATS_FILE
-echo "Same_anchor_loops: $SAME_ANCHOR_LOOPS" >> ../$STATS_FILE
-echo "5kb_loops_1PET: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET" >> ../$STATS_FILE
-echo "5kb_loops_2PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS" >> ../$STATS_FILE
-echo "5kb_loops_3PETs: $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" >> ../$STATS_FILE
+echo "Anchor_mapped_PETs $ANCHOR_PETS" >> ../$STATS_FILE
+echo "Anchor_mapped_PETs_5kb $DIFF_ANCHOR_PETS_5KB" >> ../$STATS_FILE
+
+echo "#" >> ../$STATS_FILE
+echo "# Loop stats" >> ../$STATS_FILE
+echo "# Note: A loop is defined as a putative physical DNA interaction between two anchor locations," >> ../$STATS_FILE
+echo "# with supporting evidence provided by 1 or more PETs that map to these anchors." >> ../$STATS_FILE
+echo "Num_peaks $NUM_PEAKS" >> ../$STATS_FILE
+echo "Num_merged_peaks $NUM_MERGED_PEAKS" >> ../$STATS_FILE
+#echo "Same_anchor_loops $SAME_ANCHOR_LOOPS" >> ../$STATS_FILE
+echo "5kb_loops_1PET $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET" >> ../$STATS_FILE
+echo "5kb_loops_2PETs $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS" >> ../$STATS_FILE
+echo "5kb_loops_3PETs $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" >> ../$STATS_FILE
 
 cd ..
 echo "`date`: Run finished. See $STATS_FILE for statistics" | tee -a $LOG_FILE
