@@ -1,100 +1,64 @@
 library(ggplot2)
+library(scales)
 library(foreach)
 library(gridExtra)
 library(reshape2)
+library(dplyr)
 
 dir <- "/PHShome/ma695/work/projects/chiapet_design/output/dnaloop-0.5.14/esc_010/"
 
 samples <- dir(dir, pattern = ".loop_counts.bedpe")
 samples <- sub(".loop_counts.bedpe", "", samples)
 
-# Creates a list of a numeric matrix for each sample
-# Matrix has 2 columns... distance between anchors and number of counts 
-dist_counts <- foreach(sample = samples) %do% {
-  sfilename <- paste(dir, sample , ".loop_counts.bedpe",sep="")
-  awkcmd <- paste("awk '$1 == $4 {print $5-$3 \" \" $8}' " , sfilename, sep = "")
-  awkout <- system(awkcmd, intern=TRUE)
-  d <- matrix(as.numeric(matrix(t(as.data.frame(strsplit(awkout, " "))))),ncol=2)
-  colnames(d) <- c("dist", "counts")
-  d
+# Creates a dataframe of summary statistics from the individual sample log output files
+readstats <- foreach(sample = samples, .combine="rbind") %do% {
+    sfilename <- paste(dir, "log/", sample, ".read_stats.txt", sep="")
+    rs <- read.table(sfilename, header=FALSE, stringsAsFactors = FALSE)
+    rs <- cbind(sample=sample, rs)
+    colnames(rs) <- c("sample", "metric", "count")
+    rs
 }
+metrics <- c("Total_PETs", "PETs_with_linker", "Mapped_PETs_q30", "Mapped_unique_PETs_q30", "Mapped_unique_intrachromosal_PETs_q30_5kb")
+readstats <- subset(readstats, metric %in% metrics)
 
-# Create binned matrix
-binned <- sapply(seq(1,length(dist_counts)), function(j){
-  temp <- dist_counts[[j]]
-  df <- as.data.frame(temp)
-  vals <- c(-Inf, 0, 1000, 2000, 3000, 4000, 5000, Inf)
-  sapply(seq(1, length(vals)-1), function(i){
-    with(df, sum(df[dist >= vals[i] & dist < vals[i+1], "counts"]))
-  })
-})
-colnames(binned) <- samples
-rownames(binned) <- c("Self", "0-1kb", "1-2kb", "2-3kb", "3-4kb", "4-5kb", ">5kb")
-
-# Separate unique and self
-unique <- colSums(binned[-1,])
-self <- binned[1,]
-uniself <- data.frame(rbind(self, unique))
-
-# Make ggplot object
-m0a <- melt(as.matrix(uniself))
-colnames(m0a) <- c("LoopType", "Sample", "Counts")
-p0a <- ggplot(m0a, aes(x = Sample, y = Counts, fill=LoopType))  + 
-  geom_bar(stat='identity', position=position_dodge()) + theme_bw() + 
-  ggtitle("Comparison of self-ligation versus differing ligation") + xlab("") + 
-  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) 
-p0a
-
-# Make ggplot object
-m1a <- melt(binned[-1,])
-colnames(m1a) <- c("LoopType", "Sample", "Counts")
-p1a <- ggplot(m1a, aes(x = Sample, y = Counts, fill=LoopType))  + 
-  geom_bar(stat='identity', position=position_dodge()) + theme_bw() + 
-  ggtitle("PETs with Distance between Anchors") + xlab("") + 
-  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) 
-p1a
-
-
-# Creates a dataframe of the summary statistics from the log output files
-readstatsraw <- foreach(sample = samples) %do% {
-  sfilename <- paste(dir, "log/", sample, ".read_stats.txt", sep="")
-  rs <- read.table(sfilename, header=FALSE)
-  colnames(rs) <- c("description", sample)
-  rs
+# Get loop lengths and counts
+loop_pets <- foreach(sample = samples, .combine="rbind") %do% {
+    sfilename <- paste(dir, sample , ".loop_counts.bedpe",sep="")
+    x <- read.table(sfilename, stringsAsFactors = FALSE)
+    intra <- x[,1]==x[,4]
+    x <- x[intra,]
+    loop_length <- rep(x[, 5] - x[, 3], x[, 8])
+    data.frame(sample = sample, loop_length = pmax(0, loop_length))
 }
-readstats <- Reduce(function(...) merge(..., all=T), readstatsraw)
-rd <- readstats[,-1]
-rownames(rd) <- readstats[,1]
-readstats <- t(rd)
+head(loop_pets)
 
-# Make data frame for second plot
-rs2 <- cbind(readstats[,c(12,11,6,8,7,5)])
-colnames(rs2) <- c("Total", "withLinker", "Mapped", "Unique", "Intrachromosomal", ">5kb")
-rs2
+# Add long-range loop counts to the read stats dataframe.
+grouped <- group_by(loop_pets, sample)
+summ <- summarise(grouped, long_range=sum(loop_length>=5000))
+df <- data.frame(sample=as.character(summ$sample), metric="Anchor_mapped_PETs_5kb", count=summ$long_range)
+readstats <- rbind(readstats, df)
+metrics <- c(metrics, "Anchor_mapped_PETs_5kb")
+readstats$metric <- factor(readstats$metric, levels=metrics)
 
-# Make Second Plot
-m2a <- melt(rs2)
-colnames(m2a) <- c("Sample", "Type", "Counts")
-p2a <- ggplot(m2a, aes(x = Sample, y = Counts, fill=Type))  + 
-  geom_bar(stat='identity', position=position_dodge()) + theme_bw() + 
-  ggtitle("Counts of PET Types") + xlab("") + 
-  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) 
+# Plot read stats
+p <- ggplot(readstats, aes(x = sample, y = count, fill=metric))  + 
+    geom_bar(stat='identity', position=position_dodge()) + theme_bw() + 
+    ggtitle("Counts of PET Types") + xlab("") + 
+    theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5)) 
+#p_metrics <- p +  scale_y_log10(labels=comma, breaks=10^(1:12))
+p_metrics <- p + scale_y_continuous(labels=comma)
 
+# Plot PET anchor separation distribution
+p_hist <- ggplot(loop_pets, aes(loop_length)) + geom_histogram() + scale_x_log10(labels=comma, breaks=10^(3:9)) + facet_wrap(~sample, ncol=1) + theme_bw()
 
 # Output graphics and table to PDF file
-pdf("qc-Report.pdf", height=8.5, width=11, onefile = TRUE)
-
-#First plot and table
-p2a + scale_y_log10()
+pdf("qc-Report.pdf", height=6, width=11, onefile = TRUE)
+p_metrics
 plot.new()
-grid.table(rs2)
-
-#Second plot and table
-p0a 
-p1a
-Total <- colSums(binned)
-b<- rbind(binned, Total)
+grid.table(format(acast(readstats, metric~sample, sum), big.mark=","))
+tab <- acast(readstats, metric~sample, sum)
+tab_percent <- 100*sweep(tab, 2, tab["Total_PETs",], FUN="/")
 plot.new()
-grid.table(t(b))
-
+grid.table(format(tab_percent, digits=2, nsmall=2))
+p_hist
 dev.off()
