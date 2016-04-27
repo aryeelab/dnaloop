@@ -27,9 +27,9 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
 1. Create a sample description file:
   
   Sample description files can be created in one of two formats:
+
   - `.txt` for simple cases where there is a single FASTQ pair per sample.
-  - `.yaml` for cases where individual samples may have one or more FASTQ pairs associated with it. This is typically the case when a library is sequenced more than once (i.e. 2+ runs).
-  - 
+  - `.yaml` for cases where individual samples may have one or more FASTQ pairs associated with it. This is typically the case when a library is sequenced more than once (e.g. 2+ runs or 2+ lanes).
 
   **Option 1: `.txt` format**
   
