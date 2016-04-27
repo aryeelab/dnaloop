@@ -1,3 +1,7 @@
+# 0.5.15
+- Added --peak-pad option
+- Improved QC report now included
+
 # 0.5.14
 - Cleaned up read_stats.txt
 - Drop QC report figures
