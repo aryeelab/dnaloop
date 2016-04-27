@@ -91,9 +91,10 @@ def qc_report(dir):
 @click.option('--use-lsf', is_flag=True, help='Submit jobs to an LSF cluster?')
 @click.option('--bsub-opts', default="", help='LSF bsub options')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
+@click.option('--no-qc-report', is_flag=True, help='Skip QC report generation? (Requires R)')
 @click.argument('manifest')
 #def main(manifest, cluster):
-def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep_temp_files):
+def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep_temp_files, no_qc_report):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     __version__ = get_distribution('dnaloop').version
     click.echo("Starting dnaloop pipeline v%s" % __version__)
@@ -142,9 +143,12 @@ def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep
     click.echo("Creating ChIA-PET set")
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)
-    click.echo("Creating QC report")
-    cmd = ['Rscript', os.path.join(script_dir, 'qc-report.R'), out] 
-    call(cmd)
+    if no_qc_report:
+        click.echo("Skipping QC report since --no-qc-report was specified")
+    else:
+        click.echo("Creating QC report")
+        cmd = ['Rscript', os.path.join(script_dir, 'qc-report.R'), out] 
+        call(cmd)
     if keep_temp_files:
         click.echo("Temporary files not deleted since --keep-temp-files was specified")
     else:

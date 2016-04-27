@@ -15,7 +15,7 @@ def file_checksums_equal(file1, file2):
 def test_preproc_run():
     runner = CliRunner()
     # Testing: preprocess_chiapet --out output1 --bwa-index test_genome.fa --keep-temp-files samples.txt
-    result = runner.invoke(cli.main, ['--out', 'output1', '--bwa-index', 'test_genome.fa', '--keep-temp-files', 'samples.txt'])
+    result = runner.invoke(cli.main, ['--out', 'output1', '--bwa-index', 'test_genome.fa', '--keep-temp-files', '--no-qc-report', 'samples.txt'])
     assert not result.exception
     assert result.exit_code == 0
 
@@ -31,7 +31,7 @@ def test_loop_counts():
 
 def test_preproc_run_mergegap():
     runner = CliRunner()
-    result = runner.invoke(cli.main, ['--out', 'output2', '--bwa-index', 'test_genome.fa', '--merge-gap', '1000', 'samples.txt'])
+    result = runner.invoke(cli.main, ['--out', 'output2', '--bwa-index', 'test_genome.fa', '--merge-gap', '1000', '--no-qc-report', 'samples.txt'])
     assert not result.exception
     assert result.exit_code == 0
 
