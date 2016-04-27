@@ -24,11 +24,20 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
 `git clone https://github.com/aryeelab/dnaloop.git`
 
 
-1. Create a tab-separated sample description file with three columns:
+1. Create a sample description file:
   
-- Sample name
-- Read 1 FASTQ
-- Read 2 FASTQ
+  Sample description files can be created in one of two formats:
+
+  - `.txt` for simple cases where there is a single FASTQ pair per sample.
+  - `.yaml` for cases where individual samples may have one or more FASTQ pairs associated with it. This is typically the case when a library is sequenced more than once (e.g. 2+ runs or 2+ lanes).
+
+  **Option 1: `.txt` format**
+  
+  Create a tab-separated sample description file with three columns:
+  
+   - Sample name
+   - Read 1 FASTQ
+   - Read 2 FASTQ
   
   For example:
   ```
@@ -40,7 +49,19 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
   primed_esc_2    fastq/primed_esc_2.r1.fastq.gz  fastq/primed_esc_2.r2.fastq.gz
   ```
   
-  Note that the FASTQ columns (2 and 3) can contain a comma-separated list of FASTQs. This is commonly the case when a sample is sequenced multiple times.
+  **Option 2: `.yaml` format**
+   
+   Example [yaml](https://en.wikipedia.org/wiki/YAML) format sample description file:
+   ```
+   samples:
+      naive_esc: 
+        - fastq/naive_esc_1.r1.fastq.gz fastq/naive_esc_1.r2.fastq.gz
+        - fastq/naive_esc_2.r1.fastq.gz fastq/naive_esc_2.r2.fastq.gz
+      primed_esc:
+        - fastq/primed_esc_1.r1.fastq.gz fastq/primed_esc_1.r2.fastq.gz
+   ```
+  In this example the `naive_esc` sample has two FASTQ pairs (probably from two separate sequencing runs, or two different lanes). The second sample (`primed_esc`) has only one FASTQ pair.
+  
   
 2. Run the pipeline:
   ```
@@ -57,8 +78,11 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
   Options:
     --out TEXT         Output directory name  [required]
     --bwa-index TEXT   BWA index location  [required]
+    --peak-pad TEXT    Peak padding width (applied on both left and right)
     --merge-gap TEXT   Max gap size for merging peaks
     --use-lsf          Submit jobs to an LSF cluster?
     --bsub-opts TEXT   LSF bsub options
     --keep-temp-files  Keep temporary files?
+    --no-qc-report     Skip QC report generation? (Requires R)
     --help             Show this message and exit.
+
