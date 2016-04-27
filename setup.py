@@ -24,7 +24,7 @@ setup(
             'preprocess_chiapet = dnaloop.cli:main',
         ],
     },
-    scripts=['dnaloop/preprocess_chiapet_fastq.sh', 'dnaloop/preprocess_chiapet_set.sh'],
+    scripts=['dnaloop/preprocess_chiapet_fastq.sh', 'dnaloop/preprocess_chiapet_set.sh', 'dnaloop/qc-report.R'],
     classifiers=[
         # As from http://pypi.python.org/pypi?%3Aaction=list_classifiers
         # 'Development Status :: 1 - Planning',

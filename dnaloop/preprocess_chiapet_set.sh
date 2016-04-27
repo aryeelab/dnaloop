@@ -3,8 +3,9 @@
 # Argument parsing can be fixed later, either by making this a Python script,
 # or through more elegant bash. (e.g. http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
 CHIAPET_SET_DIR=$1
-MERGE_GAP=$2
-SAMPLE_DIRS=${@:3}
+PEAK_PAD=$2
+MERGE_GAP=$3
+SAMPLE_DIRS=${@:4}
 
 #CHIAPET_SET_DIR="output/chiapet_set_1"
 #SAMPLE_DIRS="output/tiny output/small"
@@ -41,7 +42,9 @@ echo "`date`: Using `which macs2`" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 echo "`date`: MACS command: macs2 callpeak -t $CHIAPET_SET_DIR/peaks/reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir $CHIAPET_SET_DIR/peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 macs2 callpeak -t $CHIAPET_SET_DIR/peaks/reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir $CHIAPET_SET_DIR/peaks
 echo "`date`: Found `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak | wc -l` peaks" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
-bedtools merge -d $MERGE_GAP -i $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak > $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed
+awk  -v PEAK_PAD="$PEAK_PAD" '{$2-=PEAK_PAD; $3+=PEAK_PAD}1' OFS="\t" $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak > $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak.padded
+echo "`date`: Padded peaks by ${PEAK_PAD}bp" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
+bedtools merge -d $MERGE_GAP -i $CHIAPET_SET_DIR/peaks/anchor_peaks.narrowPeak.padded > $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed
 echo "`date`: Merged peaks within ${MERGE_GAP}bp resulting in `cat $CHIAPET_SET_DIR/peaks/anchor_peaks.merged.bed | wc -l` anchors" | tee -a $CHIAPET_SET_DIR/$LOG_FILE
 
 

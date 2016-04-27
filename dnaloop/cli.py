@@ -86,13 +86,14 @@ def qc_report(dir):
 #@click.option('--cluster-command', '-c', default='bsub', help='Cluster submit command')
 @click.option('--out', default=".", required=True, help='Output directory name')
 @click.option('--bwa-index', required=True, help='BWA index location')
+@click.option('--peak-pad', default="0", help='Peak padding width (applied on both left and right)')
 @click.option('--merge-gap', default="1500", help='Max gap size for merging peaks')
 @click.option('--use-lsf', is_flag=True, help='Submit jobs to an LSF cluster?')
 @click.option('--bsub-opts', default="", help='LSF bsub options')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
 @click.argument('manifest')
 #def main(manifest, cluster):
-def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_files):
+def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep_temp_files):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     __version__ = get_distribution('dnaloop').version
     click.echo("Starting dnaloop pipeline v%s" % __version__)
@@ -137,12 +138,13 @@ def main(manifest, out, bwa_index, merge_gap, use_lsf, bsub_opts, keep_temp_file
         check_call(cmd, shell=True)        
     # Create the ChIA-PET analysis set
     preproc_set = os.path.join(script_dir, 'preprocess_chiapet_set.sh')
-    cmd = [preproc_set, out, merge_gap] + [os.path.join(out, 'samples', x['name']) for x in samples]
+    cmd = [preproc_set, out, peak_pad, merge_gap] + [os.path.join(out, 'samples', x['name']) for x in samples]
     click.echo("Creating ChIA-PET set")
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)
-    # click.echo("Creating QC report")
-    # qc_report(out)
+    click.echo("Creating QC report")
+    cmd = ['Rscript', os.path.join(script_dir, 'qc-report.R'), out] 
+    call(cmd)
     if keep_temp_files:
         click.echo("Temporary files not deleted since --keep-temp-files was specified")
     else:
