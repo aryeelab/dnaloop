@@ -1,3 +1,6 @@
+# 0.5.16
+- Added --no-qc-report option
+
 # 0.5.15
 - Added --peak-pad option
 - Improved QC report now included
