@@ -143,7 +143,7 @@ def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep
     click.echo("    Executing: %s\n" % " ".join(cmd))
     call(cmd)
     click.echo("Creating QC report")
-    cmd = ['Rscript', os.path.join(script_dir, 'qc-report.r', out) 
+    cmd = ['Rscript', os.path.join(script_dir, 'qc-report.R'), out] 
     call(cmd)
     if keep_temp_files:
         click.echo("Temporary files not deleted since --keep-temp-files was specified")
