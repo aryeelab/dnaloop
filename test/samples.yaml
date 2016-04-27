@@ -1,5 +1,5 @@
 # This is an example manifest file describing two samples. Each sample's library
-# was sequenced in runs and thus has two sets of paired-end FASTQs.
+# was sequenced in two runs and thus has two sets of paired-end FASTQs.
 samples:
   naive_esc: 
     - fastq/naive_esc_1.r1.fastq.gz fastq/naive_esc_1.r2.fastq.gz
