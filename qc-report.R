@@ -68,7 +68,7 @@ p_metrics <- p + scale_y_continuous(labels=comma)
 p_hist <- ggplot(loop_pets, aes(loop_length)) + geom_histogram() + scale_x_log10(labels=comma, breaks=10^(3:9)) + facet_wrap(~sample, ncol=1) + theme_bw()
 
 # Output graphics and table to PDF file
-pdf(pdf, height=6, width=11, onefile = TRUE)
+pdf(pdf, height=8, width=11, onefile = TRUE)
 p_metrics
 plot.new()
 grid.table(format(acast(readstats, metric~sample, sum), big.mark=","))
