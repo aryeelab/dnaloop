@@ -57,8 +57,11 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
   Options:
     --out TEXT         Output directory name  [required]
     --bwa-index TEXT   BWA index location  [required]
+    --peak-pad TEXT    Peak padding width (applied on both left and right)
     --merge-gap TEXT   Max gap size for merging peaks
     --use-lsf          Submit jobs to an LSF cluster?
     --bsub-opts TEXT   LSF bsub options
     --keep-temp-files  Keep temporary files?
+    --no-qc-report     Skip QC report generation? (Requires R)
     --help             Show this message and exit.
+
