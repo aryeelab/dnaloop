@@ -26,9 +26,9 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
 
 1. Create a tab-separated sample description file with three columns:
   
-- Sample name
-- Read 1 FASTQ
-- Read 2 FASTQ
+ - Sample name
+ - Read 1 FASTQ
+ - Read 2 FASTQ
   
   For example:
   ```
@@ -40,7 +40,7 @@ The example below uses the test dataset bundled with the `dnaloop` package sourc
   primed_esc_2    fastq/primed_esc_2.r1.fastq.gz  fastq/primed_esc_2.r2.fastq.gz
   ```
   
-  Note that the FASTQ columns (2 and 3) can contain a comma-separated list of FASTQs. This is commonly the case when a sample is sequenced multiple times.
+  Note that the FASTQ columns (2 and 3) can contain a comma-separated list of FASTQs. This is commonly the case when a library is sequenced multiple times.
   
 2. Run the pipeline:
   ```
