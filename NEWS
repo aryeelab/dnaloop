@@ -1,3 +1,17 @@
+# 0.5.17
+- Don't remove output dir prior to pipeline start
+
+# 0.5.16
+- Added --no-qc-report option
+
+# 0.5.15
+- Added --peak-pad option
+- Improved QC report now included
+
+# 0.5.14
+- Cleaned up read_stats.txt
+- Drop QC report figures
+
 # 0.5.13
 - Fixed naming inconsistencies in read_stats.txt
 
