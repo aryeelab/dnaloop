@@ -98,9 +98,8 @@ def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep
     """A preprocessing and QC pipeline for ChIA-PET data."""
     __version__ = get_distribution('dnaloop').version
     click.echo("Starting dnaloop pipeline v%s" % __version__)
-    if os.path.exists(out):
-        shutil.rmtree(out)
-    os.mkdir(out)
+    if not os.path.exists(out):
+        os.mkdir(out)        
     os.mkdir(os.path.join(out, 'log'))
     with open(os.path.join(out, 'log', 'VERSION.txt'), 'w') as f: 
         f.write(__version__ + '\n')
