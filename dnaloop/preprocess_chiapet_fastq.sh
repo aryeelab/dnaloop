@@ -9,6 +9,7 @@ BWA_INDEX=$2
 MERGE_GAP=$3
 R1_FASTQ=$4
 R2_FASTQ=$5
+ADAPTERS=${@:6}
 
 ## Test argument set 1
 #SAMPLE_DIR="output/tiny"
@@ -23,8 +24,7 @@ R2_FASTQ=$5
 # Parameters are hard-coded for now:
 MIN_QUAL=30
 READ_LEN=100 # Only used to define the intervals in BEDPE (i.e. start=map_pos, end=map_pos+READ_LEN)
-FWD_ADAPTER="ACGCGATATCTTATCTGACT"
-REV_ADAPTER="AGTCAGATAAGATATCGCGT"
+
 #BWA_INDEX="/data/aryee/pub/genomes/grch37/bwa_index/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa"
 #BWA_INDEX="`pwd`/test/test_genome.fa"
 
@@ -40,7 +40,8 @@ cat ${R2_FASTQ//,/ } > $SAMPLE_DIR/r2.fastq.gz
 cd $SAMPLE_DIR
 
 echo "`date`: Finding and removing linkers" | tee -a $LOG_FILE
-cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" -a forward=$FWD_ADAPTER -a reverse=$REV_ADAPTER -A forward=$FWD_ADAPTER -A reverse=$REV_ADAPTER -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
+echo cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" $ADAPTERS -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
+cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" $ADAPTERS -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
 
 echo "`date`: Writing linker counts to linker_stats.txt and linker_stats_detail.txt" | tee -a $LOG_FILE
 zcat r1.linker_removed.fastq.gz | awk 'NR%4==1' | awk '{print $NF}' > linker_r1.txt
@@ -104,68 +105,4 @@ echo "Mapped_unique_PETs_q${MIN_QUAL} `cat interactions.dedup.bedpe | wc -l`" >>
 #echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL} `awk '{if ($1==$4) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
 echo "Mapped_unique_intrachromosal_PETs_q${MIN_QUAL}_5kb `awk '{if (($1==$4) && ($5-$3 >= 5000)) print}' interactions.dedup.bedpe | wc -l`" >> $STATS_FILE
 
-
-##############################################################################
-####  Note that the section below dealing with peak calling and
-####  anchor mapping largely duplicates code from preprocess_chiapet_set. DRY
-echo "`date`: Running preprocess_chiapet_set to compute anchor stats" | tee -a $LOG_FILE
-SAMPLE_ANCHOR_DIR=anchors
-mkdir -p $SAMPLE_ANCHOR_DIR
-echo "`date`: Writing unique interaction left and right anchors for $SAMPLE_DIR to left.dedup.bed and right.dedup.bed" | tee -a $LOG_FILE
-cut -f 1-3,7 interactions.dedup.bedpe > $SAMPLE_ANCHOR_DIR/left.dedup.bed 
-cut -f 4-6,7 interactions.dedup.bedpe > $SAMPLE_ANCHOR_DIR/right.dedup.bed 
-cd $SAMPLE_ANCHOR_DIR
-echo "`date`: Adding reads to reads.bed" | tee -a ../$LOG_FILE
-cat left.dedup.bed right.dedup.bed > reads.bed
-echo "`date`: Calling peaks using reads.bed to define interaction anchor locations" | tee -a ../$LOG_FILE
-echo "`date`: Using `which macs2`" | tee -a ../$LOG_FILE
-echo "`date`: MACS command: macs2 callpeak -t reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir ." | tee -a ../$LOG_FILE
-macs2 callpeak -t reads.bed -f BED -n anchor --nomodel -p 0.01 --outdir .
-NUM_PEAKS=`cat anchor_peaks.narrowPeak | wc -l`
-echo "`date`: Found $NUM_PEAKS peaks" | tee -a ../$LOG_FILE
-bedtools merge -d $MERGE_GAP -i anchor_peaks.narrowPeak > anchor_peaks.merged.bed
-NUM_MERGED_PEAKS=`cat anchor_peaks.merged.bed | wc -l`
-echo "`date`: Merged peaks within ${MERGE_GAP}bp resulting in $NUM_MERGED_PEAKS anchors" | tee -a ../$LOG_FILE
-echo "`date`:   Mapping `cat left.dedup.bed | wc -l` PETs to anchors by intersecting with peaks" | tee -a ../$LOG_FILE
-bedtools intersect -loj -a left.dedup.bed -b anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > anchor1.bed
-bedtools intersect -loj -a right.dedup.bed -b anchor_peaks.merged.bed | awk '{print $5,$6,$7,$4}' OFS='\t' > anchor2.bed
-# Confirm reads match up between left and right
-cut -f 4 anchor1.bed > anchor1_names.txt
-cut -f 4 anchor2.bed > anchor2_names.txt
-DIFF=$(diff anchor1_names.txt anchor1_names.txt) 
-if [ "$DIFF" != "" ] 
-then
-    echo "ERROR: Read names don't match between anchor1.bed and anchor2.bed" | tee -a ../$LOG_FILE
-    exit 1
-fi
-# Create BEDPE
-paste anchor1.bed anchor2.bed | cut -f 1-3,5-8 > anchor_interactions.tmp
-# Keep only interactions where both reads map to anchors
-awk '{if ($1 != "." && $4 != ".") print}' anchor_interactions.tmp > anchor_interactions.bedpe
-ANCHOR_PETS=`cat anchor_interactions.bedpe | wc -l`
-echo "`date`:   Wrote $ANCHOR_PETS PETs where both reads map to anchors (anchor_interactions.bedpe)" | tee -a ../$LOG_FILE    
-DIFF_ANCHOR_PETS_5KB=`awk '($1==$4) && ($5-$3 >= 5000)' anchor_interactions.tmp | wc -l`    
-cut -f1-6 anchor_interactions.bedpe | sort | uniq -c | awk '{print $2,$3,$4,$5,$6,$7,".",$1}' > loop_counts.bedpe
-SAME_ANCHOR_LOOPS=`cat loop_counts.bedpe | awk '$1==$4 && $2==$5' | wc -l`
-DIFF_ANCHOR_LOOPS=`cat loop_counts.bedpe | awk '$1!=$4 || $2!=$5' | wc -l`
-DIFF_ANCHOR_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1!=$4 || $2!=$5) && $8>=3' | wc -l`
-DIFF_ANCHOR_INTRACHROMOSOMAL_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($2!=$5) && $8>=3' | wc -l`
-DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000)' | wc -l`
-DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=2' | wc -l`
-DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS=`cat loop_counts.bedpe | awk '($1==$4) && ($5-$3 >= 5000) && $8>=3' | wc -l`
-echo "Anchor_mapped_PETs $ANCHOR_PETS" >> ../$STATS_FILE
-echo "Anchor_mapped_PETs_5kb $DIFF_ANCHOR_PETS_5KB" >> ../$STATS_FILE
-
-echo "#" >> ../$STATS_FILE
-echo "# Loop stats" >> ../$STATS_FILE
-echo "# Note: A loop is defined as a putative physical DNA interaction between two anchor locations," >> ../$STATS_FILE
-echo "# with supporting evidence provided by 1 or more PETs that map to these anchors." >> ../$STATS_FILE
-echo "Num_peaks $NUM_PEAKS" >> ../$STATS_FILE
-echo "Num_merged_peaks $NUM_MERGED_PEAKS" >> ../$STATS_FILE
-#echo "Same_anchor_loops $SAME_ANCHOR_LOOPS" >> ../$STATS_FILE
-echo "5kb_loops_1PET $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_1PET" >> ../$STATS_FILE
-echo "5kb_loops_2PETs $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_2PETS" >> ../$STATS_FILE
-echo "5kb_loops_3PETs $DIFF_ANCHOR_INTRACHROMOSOMAL_5KB_LOOPS_3PETS" >> ../$STATS_FILE
-
-cd ..
 echo "`date`: Run finished. See $STATS_FILE for statistics" | tee -a $LOG_FILE

@@ -1,3 +1,10 @@
+# 0.5.18
+- Added --linker option
+- Removed within-sample anchor stats from log
+
+# 0.5.17
+- Don't remove output dir prior to pipeline start
+
 # 0.5.16
 - Added --no-qc-report option
 
