@@ -35,6 +35,17 @@ def test_preproc_run_mergegap():
     assert not result.exception
     assert result.exit_code == 0
 
+def test_preproc_run_with_specified_adapters():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, ['--out', 'output3', '--bwa-index', 'test_genome.fa', '--no-qc-report', '--linker', 'forward=ACGCGATATCTTATCTGACT', '--linker', 'reverse=AGTCAGATAAGATATCGCGT', '--keep-temp-files', 'samples.txt'])
+    assert not result.exception
+    assert result.exit_code == 0
+
+def test_peaks_with_specified_adapters():
+    assert file_checksums_equal('correct_output/peaks/anchor_peaks.narrowPeak', 'output3/peaks/anchor_peaks.narrowPeak')
+    assert file_checksums_equal('correct_output/peaks/anchor_peaks.merged.bed', 'output3/peaks/anchor_peaks.merged.bed')
+
+
 def test_parse_yaml_manifest():
     samples = [ {   'name': 'naive_esc',
                     'read1': 'fastq/naive_esc_1.r1.fastq.gz,fastq/naive_esc_2.r1.fastq.gz', 

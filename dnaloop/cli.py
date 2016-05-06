@@ -1,5 +1,6 @@
 import click
 import os
+import sys
 import shutil
 import yaml
 import shutil
@@ -88,18 +89,20 @@ def qc_report(dir):
 @click.option('--bwa-index', required=True, help='BWA index location')
 @click.option('--peak-pad', default="0", help='Peak padding width (applied on both left and right)')
 @click.option('--merge-gap', default="1500", help='Max gap size for merging peaks')
+@click.option('--linker', default=["forward=ACGCGATATCTTATCTGACT", "reverse=AGTCAGATAAGATATCGCGT"], help='ChIA-PET linker sequence(s). Can be specified multiple times.', multiple=True)
 @click.option('--use-lsf', is_flag=True, help='Submit jobs to an LSF cluster?')
 @click.option('--bsub-opts', default="", help='LSF bsub options')
 @click.option('--keep-temp-files', is_flag=True, help='Keep temporary files?')
 @click.option('--no-qc-report', is_flag=True, help='Skip QC report generation? (Requires R)')
 @click.argument('manifest')
 #def main(manifest, cluster):
-def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep_temp_files, no_qc_report):
+def main(manifest, out, bwa_index, peak_pad, merge_gap, linker, use_lsf, bsub_opts, keep_temp_files, no_qc_report):
     """A preprocessing and QC pipeline for ChIA-PET data."""
     __version__ = get_distribution('dnaloop').version
     click.echo("Starting dnaloop pipeline v%s" % __version__)
-    if not os.path.exists(out):
-        os.mkdir(out)        
+    if os.path.exists(out):
+        sys.exit("ERROR: Output path (%s) already exists." % out)
+    os.mkdir(out)        
     os.mkdir(os.path.join(out, 'log'))
     with open(os.path.join(out, 'log', 'VERSION.txt'), 'w') as f: 
         f.write(__version__ + '\n')
@@ -107,7 +110,8 @@ def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep
     out = os.path.abspath(out)    
     bwa_index = os.path.abspath(bwa_index)    
     click.echo("Output folder: %s" % out) 
-    click.echo("BWA index: %s\n" % bwa_index)     
+    click.echo("BWA index: %s\n" % bwa_index)         
+    linkers = " ".join(["-a %s -A %s" % (x, x) for x in linker])
     # Preprocess individual samples
     samples = parse_manifest(manifest)
     i = 0
@@ -120,7 +124,7 @@ def main(manifest, out, bwa_index, peak_pad, merge_gap, use_lsf, bsub_opts, keep
         click.echo("    Read 1: %s" % sample['read1']) 
         click.echo("    Read 2: %s" % sample['read2'])    
         preproc_fastq = os.path.join(script_dir, 'preprocess_chiapet_fastq.sh')
-        cmd = [preproc_fastq, os.path.join(out, 'samples', sample['name']), bwa_index, merge_gap, sample['read1'], sample['read2']]
+        cmd = [preproc_fastq, os.path.join(out, 'samples', sample['name']), bwa_index, merge_gap, sample['read1'], sample['read2'], linkers]
         if use_lsf:
             job_id = 'dnaloop_sample_%s_%d' % (lsf_id, i)
             cmd = "bsub -J %s %s %s" % (job_id, bsub_opts,  " ".join(cmd))

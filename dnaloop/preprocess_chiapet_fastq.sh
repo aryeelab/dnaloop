@@ -9,6 +9,7 @@ BWA_INDEX=$2
 MERGE_GAP=$3
 R1_FASTQ=$4
 R2_FASTQ=$5
+ADAPTERS=${@:6}
 
 ## Test argument set 1
 #SAMPLE_DIR="output/tiny"
@@ -23,8 +24,7 @@ R2_FASTQ=$5
 # Parameters are hard-coded for now:
 MIN_QUAL=30
 READ_LEN=100 # Only used to define the intervals in BEDPE (i.e. start=map_pos, end=map_pos+READ_LEN)
-FWD_ADAPTER="ACGCGATATCTTATCTGACT"
-REV_ADAPTER="AGTCAGATAAGATATCGCGT"
+
 #BWA_INDEX="/data/aryee/pub/genomes/grch37/bwa_index/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa"
 #BWA_INDEX="`pwd`/test/test_genome.fa"
 
@@ -40,7 +40,8 @@ cat ${R2_FASTQ//,/ } > $SAMPLE_DIR/r2.fastq.gz
 cd $SAMPLE_DIR
 
 echo "`date`: Finding and removing linkers" | tee -a $LOG_FILE
-cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" -a forward=$FWD_ADAPTER -a reverse=$REV_ADAPTER -A forward=$FWD_ADAPTER -A reverse=$REV_ADAPTER -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
+echo cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" $ADAPTERS -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
+cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" $ADAPTERS -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
 
 echo "`date`: Writing linker counts to linker_stats.txt and linker_stats_detail.txt" | tee -a $LOG_FILE
 zcat r1.linker_removed.fastq.gz | awk 'NR%4==1' | awk '{print $NF}' > linker_r1.txt
