@@ -7,7 +7,7 @@ dependencies = ['click', 'pyyaml', 'cutadapt', 'MACS2', 'numpy', 'pandas', 'matp
 
 setup(
     name='dnaloop',
-    version='0.5.18',
+    version='0.5.19',
     url='https://github.com/aryeelab/dnaloop',
     license='BSD',
     author='Caleb Lareau and Martin Aryee',
