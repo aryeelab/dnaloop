@@ -9,7 +9,9 @@ BWA_INDEX=$2
 MERGE_GAP=$3
 R1_FASTQ=$4
 R2_FASTQ=$5
-ADAPTERS=${@:6}
+BWA_MODE=$6
+ALLOW_MISSING_LINKER=$7
+ADAPTERS=${@:8}
 
 ## Test argument set 1
 #SAMPLE_DIR="output/tiny"
@@ -39,8 +41,13 @@ echo "`date`: Copying ${R2_FASTQ} to r2.fastq.gz" | tee -a $SAMPLE_DIR/$LOG_FILE
 cat ${R2_FASTQ//,/ } > $SAMPLE_DIR/r2.fastq.gz
 cd $SAMPLE_DIR
 
+# Reads shorter than 5bp are replaced with NNNNN
+zcat r1.fastq.gz | paste - - - - | awk 'BEGIN{FS="\t"; OFS="\t"}{if (length($2)<5) {$2 = "NNNNN"; $4 = "....."}; print}' | tr "\t" "\n" | gzip > r1.fastq.noblanks.gz
+mv r1.fastq.noblanks.gz r1.fastq.gz
+zcat r2.fastq.gz | paste - - - - | awk 'BEGIN{FS="\t"; OFS="\t"}{if (length($2)<5) {$2 = "NNNNN"; $4 = "....."}; print}' | tr "\t" "\n" | gzip > r2.fastq.noblanks.gz
+mv r2.fastq.noblanks.gz r2.fastq.gz
+
 echo "`date`: Finding and removing linkers" | tee -a $LOG_FILE
-echo cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" $ADAPTERS -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
 cutadapt -n 3 -m 17 --overlap 10 --pair-filter=both --suffix " {name}" $ADAPTERS -o r1.linker_removed.fastq.gz -p r2.linker_removed.fastq.gz --untrimmed-output r1.no_linker.fastq.gz --untrimmed-paired-output r2.no_linker.fastq.gz r1.fastq.gz r2.fastq.gz > cutadapt.log
 
 echo "`date`: Writing linker counts to linker_stats.txt and linker_stats_detail.txt" | tee -a $LOG_FILE
@@ -53,10 +60,25 @@ rm linker.txt
 rm linker_r1.txt
 rm linker_r2.txt
 
-echo "`date`: Aligning PETs that had a linker (R1 or R2 or both)" | tee -a $LOG_FILE
-bwa mem $BWA_INDEX r1.linker_removed.fastq.gz 2> bwa.log  | samtools view -bS - > r1.bam 
-bwa mem $BWA_INDEX r2.linker_removed.fastq.gz 2>> bwa.log | samtools view -bS - > r2.bam 
+cp r1.linker_removed.fastq.gz r1.clean.gz
+cp r2.linker_removed.fastq.gz r2.clean.gz
+if [ "$ALLOW_MISSING_LINKER" == "allow_missing_linker=yes" ]; then
+    echo "`date`: Aligning PETs using bwa $BWA_MODE" | tee -a $LOG_FILE
+    cat r1.no_linker.fastq.gz >> r1.clean.gz
+    cat r2.no_linker.fastq.gz >> r2.clean.gz
+else
+    echo "`date`: Aligning PETs that had a linker (R1 or R2 or both) using bwa $BWA_MODE" | tee -a $LOG_FILE
+fi
 
+if [ "$BWA_MODE" == "mem" ]; then
+    bwa mem $BWA_INDEX r1.clean.gz 2> bwa.log  | samtools view -bS - > r1.bam 
+    bwa mem $BWA_INDEX r2.clean.gz 2>> bwa.log | samtools view -bS - > r2.bam 
+else
+    bwa aln $BWA_INDEX r1.clean.fastq.gz > r1.clean.sai
+    bwa samse $BWA_INDEX r1.clean.sai r1.clean.fastq.gz | samtools view -bS - > r1.bam
+    bwa aln $BWA_INDEX r2.clean.fastq.gz > r2.clean.sai
+    bwa samse $BWA_INDEX r2.clean.sai r2.clean.fastq.gz | samtools view -bS - > r2.bam
+fi
 echo "`date`: Writing interactions with both anchors mapped (MAPQ>=$MIN_QUAL) to interactions.bedpe" | tee -a $LOG_FILE
 samtools view -F2304 r1.bam  | awk -v READ_LEN="$READ_LEN" -v MIN_QUAL="$MIN_QUAL" '{if ($5>=MIN_QUAL) print $3,$4,$4+READ_LEN,$1; else print "*","*","*",$1}' OFS='\t' > pos_r1.bed
 samtools view -F2304 r2.bam  | awk -v READ_LEN="$READ_LEN" -v MIN_QUAL="$MIN_QUAL" '{if ($5>=MIN_QUAL) print $3,$4,$4+READ_LEN,$1; else print "*","*","*",$1}' OFS='\t' > pos_r2.bed

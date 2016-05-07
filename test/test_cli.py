@@ -45,6 +45,12 @@ def test_peaks_with_specified_adapters():
     assert file_checksums_equal('correct_output/peaks/anchor_peaks.narrowPeak', 'output3/peaks/anchor_peaks.narrowPeak')
     assert file_checksums_equal('correct_output/peaks/anchor_peaks.merged.bed', 'output3/peaks/anchor_peaks.merged.bed')
 
+def test_preproc_run_allow_missing_linker():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, ['--out', 'output4', '--bwa-index', 'test_genome.fa', '--no-qc-report', '--allow-missing-linker', 'samples.txt'])
+    assert not result.exception
+    assert result.exit_code == 0
+
 
 def test_parse_yaml_manifest():
     samples = [ {   'name': 'naive_esc',
